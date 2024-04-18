@@ -1,18 +1,46 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application_0/constants/pallete.dart';
 import 'package:flutter_application_0/data/addcarted.dart';
-import 'package:flutter_application_0/data/medicinedata.dart';
 import 'package:flutter_application_0/search/bloc/search_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_application_0/model/medicinedatamodel.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => SearchBloc(dummyMedicines, carteditems),
-      child: SearchScreenContent(),
+    return FutureBuilder<List<Medicine>>(
+      future: fetchMedicinesFromApi(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        } else if (snapshot.hasError) {
+          return Center(
+            child: Text('Error: ${snapshot.error}'),
+          );
+        } else {
+          return BlocProvider(
+            create: (context) => SearchBloc(snapshot.data!, carteditems),
+            child: SearchScreenContent(),
+          );
+        }
+      },
     );
+  }
+
+  Future<List<Medicine>> fetchMedicinesFromApi() async {
+    final response = await http.get(Uri.parse('http://192.168.1.44:8080/api/products'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Medicine.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load medicines from API');
+    }
   }
 }
 
@@ -52,10 +80,9 @@ class _SearchScreenContentState extends State<SearchScreenContent> {
                   },
                   child: Container(
                     color: Colors.white,
-                    padding: EdgeInsets.all(8.0), // Adjust padding as needed
+                    padding: EdgeInsets.all(8.0),
                     child: Icon(
-                      Icons
-                          .arrow_back_ios, // Use the Cupertino-style back button icon
+                      Icons.arrow_back_ios,
                       color: Colors.black,
                     ),
                   ),
@@ -64,7 +91,6 @@ class _SearchScreenContentState extends State<SearchScreenContent> {
               backgroundColor: Color.fromARGB(255, 237, 239, 245),
               body: Column(
                 children: [
-                  // Your top container widget
                   Container(
                     height: 80,
                     width: double.infinity,
@@ -81,8 +107,7 @@ class _SearchScreenContentState extends State<SearchScreenContent> {
                                   searchBloc.add(SearchQueryChanged(query));
                                 },
                                 decoration: InputDecoration(
-                                  prefixText:
-                                      "     ", // Add space before cursor
+                                  prefixText: "     ",
                                   suffixIcon: Icon(
                                     Icons.search,
                                     color: Colors.white,
@@ -121,17 +146,12 @@ class _SearchScreenContentState extends State<SearchScreenContent> {
                       itemCount: state.filteredMedicines.length,
                       itemBuilder: (context, index) {
                         final medicine = state.filteredMedicines[index];
-
-                        // Check if the medicine is in the cart
+                        
                         final isInCart = carteditems.contains(medicine);
-
-                        // Update the isInCart property of the medicine
-                        medicine.isInCart = isInCart;
-
+                        // medicine.isInCart = isInCart;
                         return MedicineTile(
                           medicine: medicine,
-                          onItemRemoved:
-                              rebuildScreen, // Pass callback function
+                          onItemRemoved: rebuildScreen,
                         );
                       },
                     ),
@@ -141,7 +161,7 @@ class _SearchScreenContentState extends State<SearchScreenContent> {
             ),
           );
         } else {
-          return Container(); // Placeholder for other states
+          return Container();
         }
       },
     );
@@ -150,7 +170,7 @@ class _SearchScreenContentState extends State<SearchScreenContent> {
 
 class MedicineTile extends StatelessWidget {
   final Medicine medicine;
-  final VoidCallback onItemRemoved; // Define callback function
+  final VoidCallback onItemRemoved;
 
   const MedicineTile({
     Key? key,
@@ -212,12 +232,9 @@ class MedicineTile extends StatelessWidget {
                 IconButton(
                   onPressed: () {
                     if (carteditems.contains(medicine)) {
-                      // Remove the item from the cart
                       carteditems.remove(medicine);
-                      // Call the callback function to rebuild the screen
                       onItemRemoved();
                     } else {
-                      // Dispatch the SearchItemAddedToCart event to the bloc
                       BlocProvider.of<SearchBloc>(context).add(
                           SearchitemaddedtocartEvent(addingproduct: medicine));
                     }

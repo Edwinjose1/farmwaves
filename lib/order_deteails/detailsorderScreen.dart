@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_0/Screens/orderprocessingpage.dart';
 import 'package:flutter_application_0/constants/pallete.dart';
 import 'package:flutter_application_0/model/medicinedatamodel.dart';
 import 'package:flutter_application_0/order_deteails/addresssection.dart';
@@ -167,7 +168,14 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
             ),
             ElevatedButton(
               onPressed: () {
-                openCheckout();
+
+  Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => OrderProcessingPage()),
+                        );
+
+                // openCheckout();
               },
               child: Text('Proceed to Pay', style: TextStyle()),
             ),

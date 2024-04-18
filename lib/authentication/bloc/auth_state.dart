@@ -5,10 +5,17 @@ sealed class AuthState {}
 
 final class AuthInitial extends AuthState {}
 
-final class AuthSuccess extends AuthState {
-  final String uid;
+class AuthSuccess extends AuthState {
+  final String token;
 
-  AuthSuccess({required this.uid});
+  AuthSuccess({required this.token});
+
+  @override
+  List<Object> get props => [token];
+}
+
+class SignupSuccess extends AuthState {
+  SignupSuccess();
 }
 
 final class AuthFailure extends AuthState {

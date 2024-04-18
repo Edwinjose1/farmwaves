@@ -1,9 +1,14 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_0/authentication/bloc/auth_bloc.dart';
-import 'package:flutter_application_0/authentication/ui/original_login_screen1.dart';
+import 'package:flutter_application_0/authentication/ui/login_screen1.dart';
+import 'package:flutter_application_0/authentication/ui/signup_screen.dart';
 import 'package:flutter_application_0/constants/pallete.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-void main() {
+Future main() async{
+
+  // WidgetsFlutterBinding.ensureInitialized();
+  // await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -22,7 +27,7 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         title: 'Flutter Demo',
         theme: ThemeData.light(), // Use light theme as default
-        home: LoginScreen(),
+        home: SignupScreen(),
       ),
     );
   }

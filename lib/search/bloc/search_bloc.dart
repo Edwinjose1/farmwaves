@@ -21,7 +21,6 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 
 
 
-
   void _mapRemoveItemFromCartToState(
       RemoveitemfromAddedcartEvent event, Emitter<SearchState> emit) {
     if (state is SearchLoaded) {
@@ -30,7 +29,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       final index =
           updatedMedicines.indexWhere((medicine) => medicine == event.removingProduct);
       if (index != -1) {
-        updatedMedicines[index].isInCart = false; // Update isInCart to false
+        // updatedMedicines[index].isInCart = false; // Update isInCart to false
         emit(SearchLoaded(updatedMedicines));
         carteditems.remove(event.removingProduct); // Remove from carted items list
       }
@@ -60,7 +59,7 @@ void _mapSearchItemAddedToCartToState(
     final updatedMedicines = List<Medicine>.from((state as SearchLoaded).filteredMedicines);
     final index = updatedMedicines.indexWhere((medicine) => medicine == event.addingproduct);
     if (index != -1) {
-      updatedMedicines[index].isInCart = true;
+      // updatedMedicines[index].isInCart = true;
       emit(SearhedItemAddindToCartActionState());
       emit(SearchLoaded(updatedMedicines));
 

@@ -13,23 +13,21 @@ class HealthTipItem extends StatefulWidget {
   final String imageUrl;
 
   const HealthTipItem({
-    super.key,
+    Key? key,
     required this.healthTipDataModel,
     required this.homeBloc,
     required this.id,
     required this.heading,
     required this.description,
     required this.imageUrl,
-  });
+  }) : super(key: key);
 
   @override
-  // ignore: library_private_types_in_public_api
   _HealthTipItemState createState() => _HealthTipItemState();
 }
 
 class _HealthTipItemState extends State<HealthTipItem> {
-  bool _isExpanded = true;
-//  bool _isExpanded = false;
+  bool _isExpanded = false; // Initially collapsed
   bool _isLiked = false;
 
   @override
@@ -62,17 +60,15 @@ class _HealthTipItemState extends State<HealthTipItem> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: MediaQuery.of(context).size.height * .25,  // Adjust as needed
+              height: MediaQuery.of(context).size.height * .25,
               width: double.infinity,
-              color: const Color.fromARGB(
-                  255, 173, 173, 173), // Placeholder color for image
+              color: const Color.fromARGB(255, 173, 173, 173),
               child: Center(
                 child: Image.asset(
                   widget.imageUrl,
                   width: double.infinity,
                   height: MediaQuery.of(context).size.height * .25,
-                  fit: BoxFit
-                      .cover, // Make the image fill the width of the container
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
@@ -86,20 +82,15 @@ class _HealthTipItemState extends State<HealthTipItem> {
               ),
             ),
             const SizedBox(height: 10.0),
+            // Use maxLines property to limit the display to maximum 4 or 6 lines based on _isExpanded
             Text(
               widget.description,
               style: const TextStyle(color: Colors.black),
-              maxLines: _isExpanded ? null : 2, // Show all lines if expanded
+              maxLines: _isExpanded ? 6 : 4,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 10.0),
-
-
-
-
-
-            if (widget.description.length >
-                100) // Show 'See More' button if description length exceeds 100 characters
+            if (widget.description.length > 100) // Show 'See More' button if description length exceeds 100 characters
               TextButton(
                 onPressed: () {
                   setState(() {
@@ -107,7 +98,7 @@ class _HealthTipItemState extends State<HealthTipItem> {
                   });
                 },
                 child: Text(
-                  _isExpanded ? 'See More' : 'See Less',
+                  _isExpanded ? 'See Less' : 'See More',
                   style: const TextStyle(color: Colors.blue),
                 ),
               ),
@@ -118,20 +109,11 @@ class _HealthTipItemState extends State<HealthTipItem> {
               children: [
                 Row(
                   children: [
-
-
-
-
-
-
-
-
-
-
-
                     IconButton(
                       icon: Icon(
-                        _isLiked ? Icons.favorite : Icons.favorite_border_sharp,
+                        _isLiked
+                            ? Icons.favorite
+                            : Icons.favorite_border_sharp,
                         color: _isLiked ? Colors.red : null,
                       ),
                       onPressed: () {
@@ -142,12 +124,6 @@ class _HealthTipItemState extends State<HealthTipItem> {
                             LikedProducts: widget.healthTipDataModel));
                       },
                     ),
-
-
-
-
-
-
                     const Text(
                       '110',
                       style: TextStyle(color: Colors.black),
@@ -157,16 +133,14 @@ class _HealthTipItemState extends State<HealthTipItem> {
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.comment),onPressed: () {
-                        
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true, // Set to true for full-screen bottom sheet
-              builder: (context) => CommentPage(),
-            );
-        
+                      icon: const Icon(Icons.comment),
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          builder: (context) => CommentPage(),
+                        );
                       },
-                      
                     ),
                     const Text(
                       '23',
