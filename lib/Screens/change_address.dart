@@ -45,14 +45,7 @@ class _AddressPageState extends State<AddressPage> {
       state: 'Stateville',
       zipCode: '67890',
     ),
-    Address(
-      name: 'Alice Johnson',
-      address1: '789 Oak St',
-      address2: 'Suite 303',
-      city: 'Villageville',
-      state: 'Stateville',
-      zipCode: '54321',
-    ),
+
   ];
 
   int selectedAddressIndex = -1;
@@ -67,13 +60,13 @@ class _AddressPageState extends State<AddressPage> {
     onTap: () {
       Navigator.of(context).pop();
     },
-    child: Container(
+    child: Container(  
       color: Colors.white,
       padding: EdgeInsets.all(8.0), // Adjust padding as needed
       child: Icon(
         Icons.arrow_back_ios, // Use the Cupertino-style back button icon
         color: Colors.black,
-      ),
+      ),  
     ),
   ),
 ),

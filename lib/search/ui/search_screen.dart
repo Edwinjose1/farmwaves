@@ -1,12 +1,18 @@
-
 import 'package:flutter/material.dart';
+import 'package:flutter_application_0/cart/bloc/cart_bloc.dart';
+import 'package:flutter_application_0/cart/ui/cart_screen.dart';
 import 'package:flutter_application_0/constants/pallete.dart';
 import 'package:flutter_application_0/data/addcarted.dart';
+import 'package:flutter_application_0/model/cartitemmodel.dart';
 import 'package:flutter_application_0/search/bloc/search_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_application_0/model/medicinedatamodel.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
+Set<String> matchingProductIds = {};
 
 class SearchScreen extends StatelessWidget {
   @override
@@ -33,7 +39,8 @@ class SearchScreen extends StatelessWidget {
   }
 
   Future<List<Medicine>> fetchMedicinesFromApi() async {
-    final response = await http.get(Uri.parse('http://192.168.1.44:8080/api/products'));
+    final response =
+        await http.get(Uri.parse('http://192.168.1.44:8080/api/products'));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
@@ -51,15 +58,21 @@ class SearchScreenContent extends StatefulWidget {
 
 class _SearchScreenContentState extends State<SearchScreenContent> {
   late SearchBloc searchBloc;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     searchBloc = BlocProvider.of<SearchBloc>(context);
     searchBloc.add(LoadAllMedicines());
+    _cartInitialEvent();
   }
 
   void rebuildScreen() {
+    print('rebuilded');
+    searchBloc = BlocProvider.of<SearchBloc>(context);
+    searchBloc.add(LoadAllMedicines());
+    _cartInitialEvent();
     setState(() {});
   }
 
@@ -69,7 +82,11 @@ class _SearchScreenContentState extends State<SearchScreenContent> {
       listener: (previous, current) => current is SearchActionState,
       buildWhen: (previous, current) => current is! SearchActionState,
       builder: (context, state) {
-        if (state is SearchLoaded) {
+        if (isLoading) {
+          return Center(
+            child: CircularProgressIndicator(),
+          );
+        } else if (state is SearchLoaded) {
           return SafeArea(
             child: Scaffold(
               appBar: AppBar(
@@ -146,12 +163,13 @@ class _SearchScreenContentState extends State<SearchScreenContent> {
                       itemCount: state.filteredMedicines.length,
                       itemBuilder: (context, index) {
                         final medicine = state.filteredMedicines[index];
-                        
-                        final isInCart = carteditems.contains(medicine);
-                        // medicine.isInCart = isInCart;
+                        final isInCart =
+                            matchingProductIds.contains(medicine.id.toString());
                         return MedicineTile(
                           medicine: medicine,
-                          onItemRemoved: rebuildScreen,
+                          onItemRemoved: rebuildScreen, // Rebuild the screen
+                          onCartChanged: rebuildScreen, // Rebuild the screen when the cart changes
+                          isInCart: isInCart,
                         );
                       },
                     ),
@@ -166,16 +184,66 @@ class _SearchScreenContentState extends State<SearchScreenContent> {
       },
     );
   }
+
+  @override
+  void dispose() {
+    matchingProductIds.clear(); // Clear the matching product IDs set
+    super.dispose();
+  }
+
+  void _cartInitialEvent() async {
+    final List<Medicine> medicines = await fetchMedicinesFromApi();
+
+    final sharedpref = await SharedPreferences.getInstance();
+    String? storeduserid = sharedpref.getString('user_id');
+    print(storeduserid);
+    String userId =
+        storeduserid.toString(); // You can replace "1" with the actual user ID
+    print("${userId}");
+    final response = await http.post(
+      Uri.parse('http://192.168.1.44:8000/api/cart/'),
+      body: {'user_id': userId}, // Send user ID in the request body
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      for (var item in data) {
+        int productId = item['product_id'];
+        int quantity = item['quantity'];
+        Medicine medicine = medicines.firstWhere(
+          (m) => m.id == productId,
+          orElse: () => Medicine(
+              id: -1,
+              name: 'Unknown',
+              price: 0,
+              company: 'Unknown'), // Default medicine object
+        );
+        if (medicine.id != -1) {
+          matchingProductIds.add(medicine.id.toString());
+        } else {
+          print('Medicine with product_id $productId not found.');
+        }
+      }
+      setState(() {
+        isLoading = false;
+      });
+      print("Matching Product IDs: $matchingProductIds");
+    }
+  }
 }
 
 class MedicineTile extends StatelessWidget {
   final Medicine medicine;
   final VoidCallback onItemRemoved;
+  final VoidCallback onCartChanged; // Callback function to trigger a rebuild
+  final bool isInCart; // Define isInCart variable
 
   const MedicineTile({
     Key? key,
     required this.medicine,
     required this.onItemRemoved,
+    required this.onCartChanged,
+    required this.isInCart, // Pass it as a parameter
   }) : super(key: key);
 
   @override
@@ -231,21 +299,23 @@ class MedicineTile extends StatelessWidget {
               children: [
                 IconButton(
                   onPressed: () {
-                    if (carteditems.contains(medicine)) {
+                    String id = medicine.id.toString();
+                    if (isInCart) {
                       carteditems.remove(medicine);
-                      onItemRemoved();
+                      onItemRemoved(); // Call the provided callback function
                     } else {
+                      addToCart(id, 1);
                       BlocProvider.of<SearchBloc>(context).add(
-                          SearchitemaddedtocartEvent(addingproduct: medicine));
+                        SearchitemaddedtocartEvent(addingproduct: medicine),
+                      );
                     }
+                    onCartChanged(); // Call the provided callback function
                   },
                   icon: Icon(
-                    carteditems.contains(medicine)
+                    isInCart
                         ? Icons.remove_shopping_cart
                         : Icons.add_shopping_cart,
-                    color: carteditems.contains(medicine)
-                        ? Colors.teal
-                        : Colors.black,
+                    color: isInCart ? Colors.teal : Colors.black,
                   ),
                   iconSize: 30,
                 ),
@@ -257,4 +327,36 @@ class MedicineTile extends StatelessWidget {
       ),
     );
   }
+}
+
+
+void addToCart(String productId, int quantity) async {
+  final sharedpref = await SharedPreferences.getInstance();
+  String? storeduserid = sharedpref.getString('user_id');
+  String userId = storeduserid.toString();
+  Map<String, dynamic> requestData = {
+    'product_id': productId,
+    'quantity': quantity.toString(),
+    'user_id': userId
+  };
+
+  String requestBody = json.encode(requestData);
+
+  http.Response response = await http.post(
+    Uri.parse('http://192.168.1.44:8000/api/cart/add/'),
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: requestBody,
+  );
+
+  if (response.statusCode == 201) {
+    print('Product added to cart successfully.');
+  } else {
+    print('Failed to add product to cart. Error: ${response.body}');
+  }
+}
+
+void main() {
+  runApp(SearchScreen());
 }

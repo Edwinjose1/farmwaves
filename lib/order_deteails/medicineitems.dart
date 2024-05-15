@@ -47,11 +47,11 @@ class MedicineItem extends StatelessWidget {
           ),
           GestureDetector(
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Item added to cart'),
-                ),
-              );
+              // ScaffoldMessenger.of(context).showSnackBar(
+              //   SnackBar(
+              //     content: Text('Item added to cart'),
+              //   ),
+              // );
             },
             child: Container(
               padding: EdgeInsets.all(8.0),

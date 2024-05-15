@@ -5,19 +5,24 @@ sealed class CartState {}
 
 class CartActionState extends CartState {}
 
-final class CartInitial extends CartState {}
+class CartInitial extends CartState {}
+class CartLoadingState extends CartState {
+  CartLoadingState();
+}
 
-// class CartSucessState extends CartState{
-//   final List<Medicine> cartitems;
-//   CartSucessState({required this.cartitems});
-// }
-class CartSucessState extends CartState {
+class CartSuccessState extends CartState { 
   final List<Medicine> cartitems;
 
-  CartSucessState({required this.cartitems});
+  CartSuccessState({required this.cartitems});
 
-  // Factory constructor to create a new CartSucessState with updated cart items
-  factory CartSucessState.updatedList(List<Medicine> updatedItems) {
-    return CartSucessState(cartitems: updatedItems);
-  }
+  // Factory constructor to create a new CartSuccessState with updated cart items
+  factory CartSuccessState.updatedList(List<Medicine> updatedItems) {
+    return CartSuccessState(cartitems: updatedItems);
+  }  
+}
+
+class CartErrorState extends CartState {
+  final String error;
+
+  CartErrorState({required this.error});
 }

@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application_0/cart/bloc/cart_bloc.dart';
 import 'package:flutter_application_0/constants/pallete.dart';
 import 'package:flutter_application_0/model/medicinedatamodel.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-class MedicineTile extends StatelessWidget {
+class MedicineTile extends StatefulWidget {
   final Medicine medicine;
   final CartBloc? cartBloc;
   final VoidCallback? onItemRemoved;
@@ -16,9 +20,30 @@ class MedicineTile extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<MedicineTile> createState() => _MedicineTileState();
+}
+
+class _MedicineTileState extends State<MedicineTile> {
+  late SharedPreferences sharedpref;
+  late String? userId;
+  bool _isButtonDisabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    initializeSharedPreferences();
+  }
+
+  Future<void> initializeSharedPreferences() async {
+    sharedpref = await SharedPreferences.getInstance();
+    String? storeduserid = sharedpref.getString('user_id');
+    userId = storeduserid;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.all(8.0), 
+      padding: EdgeInsets.all(8.0),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
@@ -35,16 +60,16 @@ class MedicineTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    medicine.name,
+                    widget.medicine.name,
                     style: TextStyle(
                       color: Colors.black,
-                      fontSize: 18,                                                         
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   SizedBox(height: 5),
                   Text(
-                    'MRP: ${medicine.price} Rs',
+                    'MRP: ${widget.medicine.price} Rs',
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 16,
@@ -52,8 +77,8 @@ class MedicineTile extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 5),
-                  Text( 
-                    'Company: ${medicine.company}',
+                  Text(
+                    'Company: ${widget.medicine.company}',
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 10,
@@ -63,14 +88,14 @@ class MedicineTile extends StatelessWidget {
               ),
             ),
             SizedBox(width: 10),
-            if (cartBloc != null)
+            if (widget.cartBloc != null)
               Column(
                 children: [
                   GestureDetector(
                     onTap: () {
-                      cartBloc!.add(RemoveitemfromAddedcartEvent(
-                          removingProduct: medicine));
-                      onItemRemoved?.call();
+                      widget.cartBloc!.add(RemoveitemfromAddedcartEvent(
+                          removingProduct: widget.medicine));
+                      widget.onItemRemoved?.call();
                     },
                     child: Container(
                       decoration: BoxDecoration(
@@ -90,17 +115,29 @@ class MedicineTile extends StatelessWidget {
                   Row(
                     children: [
                       IconButton(
-                        onPressed: () {
-                          if (medicine.quantity > 1) {
-                            medicine.quantity--;
-                            onItemRemoved?.call();
-                          }
-                        },
+                        onPressed: _isButtonDisabled
+                            ? null
+                            : () async {
+                                setState(() {
+                                  _isButtonDisabled = true;
+                                });
+                                if (widget.medicine.quantity > 1) {
+                                  widget.onItemRemoved?.call();
+                                  updateQuantity(widget.medicine.id, userId!,
+                                      widget.medicine.quantity - 1);
+                                  widget.cartBloc!.add(CartInitialEvent());
+                                  await Future.delayed(
+                                      Duration(milliseconds: 200));
+                                }
+                                setState(() {
+                                  _isButtonDisabled = false;
+                                });
+                              },
                         icon: Icon(Icons.remove, color: Colors.black),
                         iconSize: 20,
                       ),
                       Text(
-                        '${medicine.quantity}',
+                        '${widget.medicine.quantity}',
                         style: TextStyle(
                           color: Colors.black,
                           fontSize: 16,
@@ -108,13 +145,26 @@ class MedicineTile extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        onPressed: () {
-                          medicine.quantity++;
-                          onItemRemoved?.call();
-                        },
-                        icon: Icon(Icons.add),
+                        onPressed: _isButtonDisabled
+                            ? null
+                            : () async {
+                                setState(() {
+                                  _isButtonDisabled = true;
+                                });
+                                if (widget.medicine.quantity >= 1) {
+                                  widget.onItemRemoved?.call();
+                                  updateQuantity(widget.medicine.id,userId!,
+                                      widget.medicine.quantity + 1);
+                                  widget.cartBloc!.add(CartInitialEvent());
+                                  await Future.delayed(
+                                      Duration(milliseconds: 200));
+                                }
+                                setState(() {
+                                  _isButtonDisabled = false;
+                                });
+                              },
+                        icon: Icon(Icons.add, color: Colors.black),
                         iconSize: 20,
-                        color: Colors.black,
                       ),
                     ],
                   ),
@@ -124,5 +174,24 @@ class MedicineTile extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+Future<void> updateQuantity(
+    int productId, String userId, int quantity) async {
+  final jsonBody = json.encode({
+    'user_id': userId,
+    'product_id': productId,
+    'quantity': quantity,
+  });
+
+  final response = await http.put(
+    Uri.parse('http://192.168.1.44:8000/api/cart/update/'),
+    body: jsonBody,
+    headers: {'Content-Type': 'application/json'},
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to update quantity');
   }
 }

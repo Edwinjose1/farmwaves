@@ -1,84 +1,137 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_0/constants/pallete.dart';
+import 'package:http/http.dart' as http;
 
-
-class User {
-  final String name;
-  final String email;
+class UserDetails {
+  final int id;
+  final String firstName;
+  final String lastName;
+  final String address1;
+  final String address2;
   final String phoneNumber;
-  final String address;
 
-  User({
-    required this.name,
-    required this.email,
+  UserDetails({
+    required this.id,
+    required this.firstName,
+    required this.lastName,
+    required this.address1,
+    required this.address2,
     required this.phoneNumber,
-    required this.address,
   });
+
+  factory UserDetails.fromJson(Map<String, dynamic> json) {
+    return UserDetails(
+      id: json['id'],
+      firstName: json['first_name'],
+      lastName: json['last_name'],
+      address1: json['address1'],
+      address2: json['address2'],
+      phoneNumber: json['phone_number'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'first_name': firstName,
+      'last_name': lastName,
+      'address1': address1,
+      'address2': address2,
+      'phone_number': phoneNumber,
+    };
+  }
 }
 
-class Order {
-  final String orderNumber;
-  final String status;
+class ApiService {
+  static const String baseUrl = 'http://192.168.1.44:8000/api/user/';
 
-  Order({required this.orderNumber, required this.status});
-}
+  static Future<UserDetails> fetchUserDetails(int userId) async {
+    final response = await http.get(Uri.parse('http://192.168.1.44:8000/api/user/details/1/'));
 
-class ProfilePage extends StatelessWidget {
-  final User user = User(
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    phoneNumber: '+1234567890',
-    address: '123 Main Street, City, Country',
+    if (response.statusCode == 200) {
+      print(response.body);
+      return UserDetails.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load user details');
+    }
+  }
+
+ static Future<void> updateUserDetails(UserDetails userDetails) async {
+  final Map<String, dynamic> requestBody = {
+    'user_id': userDetails.id.toString(), // Include user_id in the request body
+    ...userDetails.toJson(), // Include other user details
+  };
+
+  final response = await http.put(
+    Uri.parse('http://192.168.1.44:8000/api/user/update/'),
+    body: jsonEncode(requestBody),
+    headers: {'Content-Type': 'application/json'},
   );
 
-  final List<Order> orders = [
-    Order(orderNumber: 'Order #1234', status: 'Delivered'),
-    Order(orderNumber: 'Order #5678', status: 'Processing'),
-    Order(orderNumber: 'Order #9012', status: 'Cancelled'),
-  ];
+  if (response.statusCode != 200) {
+    print(response.body);
+    throw Exception('Failed to update user details');
+  }
+}
+
+}
+
+class UserDetailsScreen extends StatefulWidget {
+  final int userId;
+
+  UserDetailsScreen({required this.userId});
+
+  @override
+  _UserDetailsScreenState createState() => _UserDetailsScreenState();
+}
+
+class _UserDetailsScreenState extends State<UserDetailsScreen> {
+  late Future<UserDetails> _futureUserDetails;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  late UserDetails _userDetails;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureUserDetails = ApiService.fetchUserDetails(widget.userId);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-
-          appBar: AppBar(
-  backgroundColor: Pallete.whiteColor,
-  leading: GestureDetector(
-    onTap: () {
-      Navigator.of(context).pop();
-    },
-    child: Container(
-      color: Colors.white,
-      padding: EdgeInsets.all(8.0), // Adjust padding as needed
-      child: Icon(
-        Icons.arrow_back_ios, // Use the Cupertino-style back button icon
-        color: Colors.black,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('User Details'),
       ),
-    ),
-  ),
-),
-        
-        body: SingleChildScrollView(
-          padding: EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildPersonalInfoSection(),
-              SizedBox(height: 20.0),
-              _buildOrderHistorySection(),
-            ],
-          ),
-        ),
+      body: FutureBuilder<UserDetails>(
+        future: _futureUserDetails,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
+            _userDetails = snapshot.data!;
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPersonalInfoSection(_userDetails),
+                  SizedBox(height: 20.0),
+                ],
+              ),
+            );
+          }
+        },
       ),
     );
   }
 
-  Widget _buildPersonalInfoSection() {
+  Widget _buildPersonalInfoSection(UserDetails userDetails) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        
         Text(
           'Personal Information',
           style: TextStyle(
@@ -89,49 +142,125 @@ class ProfilePage extends StatelessWidget {
         SizedBox(height: 10.0),
         ListTile(
           leading: Icon(Icons.person),
-          title: Text(user.name),
-          subtitle: Text(user.email),
+          title: Text('${userDetails.firstName  } ${userDetails.lastName}'),
+         
         ),
         ListTile(
           leading: Icon(Icons.phone),
-          title: Text(user.phoneNumber),
+          title: Text(userDetails.phoneNumber),
         ),
         ListTile(
           leading: Icon(Icons.location_on),
-          title: Text(user.address),
+          title: Text('${userDetails.address1}'),
+           subtitle: Text("${userDetails.address2}"),
+        ),
+     
+        ElevatedButton(
+          onPressed: () {
+            _showEditDialog(userDetails);
+          },
+          child: Text('Edit'),
         ),
       ],
     );
   }
 
-  Widget _buildOrderHistorySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'My Orders',
-          style: TextStyle(
-            fontSize: 20.0,
-            fontWeight: FontWeight.bold,
+  void _showEditDialog(UserDetails userDetails) {
+    TextEditingController firstNameController = TextEditingController(text: userDetails.firstName);
+    TextEditingController lastNameController = TextEditingController(text: userDetails.lastName);
+    TextEditingController address1Controller = TextEditingController(text: userDetails.address1);
+    TextEditingController address2Controller = TextEditingController(text: userDetails.address2);
+    TextEditingController phoneNumberController = TextEditingController(text: userDetails.phoneNumber);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Edit User Details'),
+          content: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: firstNameController,
+                    decoration: InputDecoration(labelText: 'First Name'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter first name';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: lastNameController,
+                    decoration: InputDecoration(labelText: 'Last Name'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter last name';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: address1Controller,
+                    decoration: InputDecoration(labelText: 'Address 1'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter address';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: address2Controller,
+                    decoration: InputDecoration(labelText: 'Address 2'),
+                  ),
+                  TextFormField(
+                    controller: phoneNumberController,
+                    decoration: InputDecoration(labelText: 'Phone Number'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter phone number';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-        SizedBox(height: 10.0),
-        Column(
-          children: orders.map((order) {
-            return _buildOrderItem(order);
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOrderItem(Order order) {
-    return ListTile(
-      title: Text(order.orderNumber),
-      subtitle: Text('Status: ${order.status}'),
-      trailing: Icon(Icons.arrow_forward),
-      onTap: () {
-        // Navigate to order details page
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                print('hello');
+                if (_formKey.currentState!.validate()) {
+                  // Update user details
+                  UserDetails updatedUserDetails = UserDetails(
+                    id: userDetails.id,
+                    firstName: firstNameController.text,
+                    lastName: lastNameController.text,
+                    address1: address1Controller.text,
+                    address2: address2Controller.text,
+                    phoneNumber: phoneNumberController.text,
+                  );
+                  await ApiService.updateUserDetails(updatedUserDetails);
+                  setState(() {
+                    _futureUserDetails = ApiService.fetchUserDetails(widget.userId);
+                  });
+                  Navigator.of(context).pop();
+                }
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
       },
     );
   }

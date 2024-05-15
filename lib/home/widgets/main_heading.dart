@@ -69,7 +69,7 @@ class MainHeading extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => ProfilePage()),
+                              builder: (context) => UserDetailsScreen(userId: 1)),
                         );
                       },
                       child: Container(

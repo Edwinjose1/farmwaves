@@ -128,10 +128,10 @@ void showImagePreviewAndSubmit(BuildContext context, File imageFile) {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) =>  OrderProcessingPage()),
-          );
+          //               Navigator.push(
+          //   context,
+          //   MaterialPageRoute(builder: (context) =>  OrderProcessingPage()),
+          // );
                         // Perform submit action here
                       },
                       style: ElevatedButton.styleFrom(

@@ -1,9 +1,14 @@
+
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_application_0/model/medicinedatamodel.dart';
 import 'package:flutter_application_0/order_deteails/detailsorderScreen.dart';
 import 'package:flutter_application_0/cart/bloc/cart_bloc.dart';
 import 'package:flutter_application_0/cart/widgets/medicinetile.dart';
 import 'package:flutter_application_0/constants/pallete.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:http/http.dart' as http;
 
 class CartScreen extends StatefulWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -47,7 +52,11 @@ class _CartScreenState extends State<CartScreen> {
           // Listener implementation if needed
         },
         builder: (context, state) {
-          if (state is CartSucessState) {
+          if (state is CartLoadingState) {
+            return Center(
+              child: CircularProgressIndicator(), // Circular Progress Indicator
+            );
+          } else if (state is CartSuccessState) {
             if (state.cartitems.isEmpty) {
               return const Center(
                 child: Text(
@@ -71,6 +80,7 @@ class _CartScreenState extends State<CartScreen> {
                     itemCount: state.cartitems.length,
                     itemBuilder: (context, index) {
                       final med = state.cartitems[index];
+
                       return MedicineTile(
                         medicine: med,
                         cartBloc: cartBloc,
@@ -96,6 +106,7 @@ class _CartScreenState extends State<CartScreen> {
                                 "Your selected address here", // Pass the selected address here
                           ),
                         ),
+
                       );
                     },
                     child: const Text(
@@ -120,6 +131,7 @@ class _CartScreenState extends State<CartScreen> {
     setState(() {});
   }
 
+
   Widget buildTotalAmount(double totalAmount) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -132,5 +144,19 @@ class _CartScreenState extends State<CartScreen> {
         ),
       ),
     );
+  }
+}
+
+
+
+Future<List<Medicine>> fetchMedicinesFromApi() async {
+  final response =
+      await http.get(Uri.parse('http://192.168.1.44:8080/api/products'));
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = json.decode(response.body);
+    return data.map((json) => Medicine.fromJson(json)).toList();
+  } else {
+    throw Exception('Failed to load medicines from API');
   }
 }
