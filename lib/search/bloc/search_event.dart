@@ -19,6 +19,16 @@ class SearchitemaddedtocartEvent extends SearchEvent {
 }
 
 
+class CartTipLikedEvent extends SearchEvent{}
+
+class SearchitemremoveocartEvent extends SearchEvent {
+  final Medicine removeprouct;
+
+  SearchitemremoveocartEvent({required this.removeprouct});
+}
+
+
+class SearchCartEvent extends SearchEvent{}
 class Searchitemaddedtocart extends SearchEvent{
   
 }

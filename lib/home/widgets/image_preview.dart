@@ -96,7 +96,7 @@ void showImagePreviewAndSubmit(BuildContext context, File imageFile) {
                   child: SingleChildScrollView(
                     scrollDirection: Axis.vertical,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.vertical(
+                      borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(0),
                       ),
                       child: Image.file(width:300,

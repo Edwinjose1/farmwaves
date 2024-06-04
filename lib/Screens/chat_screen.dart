@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_0/cart/bloc/cart_bloc.dart';
 import 'package:flutter_application_0/constants/pallete.dart';
 
 class ChatPage extends StatefulWidget {
@@ -7,12 +8,20 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
+  late CartBloc cartBloc;
   final TextEditingController _commentController = TextEditingController();
   final List<Map<String, dynamic>> _messages = [
     {"message": "Hello! How can I assist you today?", "isBot": true},
     {"message": "Hi! I'm here to help.", "isBot": false},
   ];
-
+@override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+     cartBloc = CartBloc();
+    cartBloc.add(CartInitialEvent());
+  
+  }
   void _addMessage(String message, bool isBot) {
     setState(() {
       _messages.add({"message": message, "isBot": isBot});
@@ -31,8 +40,8 @@ class _ChatPageState extends State<ChatPage> {
     },
     child: Container(
       color: Colors.white,
-      padding: EdgeInsets.all(8.0), // Adjust padding as needed
-      child: Icon(
+      padding: const EdgeInsets.all(8.0), // Adjust padding as needed
+      child: const Icon(
         Icons.arrow_back_ios, // Use the Cupertino-style back button icon
         color: Colors.black,
       ),
@@ -48,7 +57,7 @@ class _ChatPageState extends State<ChatPage> {
               itemBuilder: (context, index) {
                 bool isBot = _messages[index]["isBot"];
                 return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Row(
                     mainAxisAlignment: isBot ? MainAxisAlignment.start : MainAxisAlignment.end,
                     children: [
@@ -60,7 +69,7 @@ class _ChatPageState extends State<ChatPage> {
                           borderRadius: BorderRadius.circular(20),
                           color: isBot ? Colors.grey[200] :Pallete.darkgreenColor,
                         ),
-                        padding: EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(12),
                         child: Text(
                           _messages[index]["message"],
                           style: TextStyle(color: isBot ? Colors.black : Colors.white),
@@ -72,16 +81,16 @@ class _ChatPageState extends State<ChatPage> {
               },
             ),
           ),
-          Divider(color: Colors.grey, thickness: 2),
+          const Divider(color: Colors.grey, thickness: 2),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   backgroundImage: AssetImage('assets/images/2.jpg'),
                   backgroundColor: Colors.white,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
@@ -93,7 +102,7 @@ class _ChatPageState extends State<ChatPage> {
                         Expanded(
                           child: TextField(
                             controller: _commentController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               hintText: 'Type your message...',
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.symmetric(
@@ -102,11 +111,11 @@ class _ChatPageState extends State<ChatPage> {
                               ),
                               hintStyle: TextStyle(color: Colors.black),
                             ),
-                            style: TextStyle(color: Colors.black),
+                            style: const TextStyle(color: Colors.black),
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.send, color: Colors.black),
+                          icon: const Icon(Icons.send, color: Colors.black),
                           onPressed: () {
                             String message = _commentController.text;
                             if (message.isNotEmpty) {

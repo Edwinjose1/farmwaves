@@ -21,12 +21,20 @@ class Headpart extends StatelessWidget {
                 padding:
                     const EdgeInsets.fromLTRB(5, 10, 5, 10),
                 child: Container(
-                child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                height: 50,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                        width: 2.3, color: Colors.white),
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                child: const Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(30, 0, 0, 0),
-                        child: const Text(
+                        padding: EdgeInsets.fromLTRB(30, 0, 0, 0),
+                        child: Text(
                           'Search here.....',
                           style:
                               TextStyle(color: Colors.white),
@@ -34,21 +42,13 @@ class Headpart extends StatelessWidget {
                       ),
                       
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(0, 0, 30, 0),
-                        child: const Icon(
+                        padding: EdgeInsets.fromLTRB(0, 0, 30, 0),
+                        child: Icon(
                           Icons.search_sharp,
                           color: Colors.white,
                         ),
                       )
                     ],
-                  ),
-                  height: 50,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                        width: 2.3, color: Colors.white),
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
                   ),
                 ),
               ),

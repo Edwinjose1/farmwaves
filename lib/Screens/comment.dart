@@ -1,3 +1,5 @@
+// ignore_for_file: use_key_in_widget_constructors, library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 
 class Comment {
@@ -20,7 +22,7 @@ class CommentPageContainer extends StatelessWidget {
       body: SizedBox(
         // height: MediaQuery.of(context).size.height * 10, // 75% of screen height
         child: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20.0),
               topRight: Radius.circular(20.0),
@@ -47,7 +49,7 @@ class _CommentPageState extends State<CommentPage> {
     // Add more comments as needed
   ];
 
-  TextEditingController _commentController = TextEditingController();
+  final TextEditingController _commentController = TextEditingController();
 
   void _toggleLike(Comment comment) {
     setState(() {
@@ -69,9 +71,9 @@ class _CommentPageState extends State<CommentPage> {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
           Container(height: 5, width: 50, color: Colors.grey),
-          Text(
+          const Text(
             'Comments',
             style: TextStyle(
               color: Colors.black,
@@ -79,7 +81,7 @@ class _CommentPageState extends State<CommentPage> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          Divider(color: Colors.grey, thickness: 2),
+          const Divider(color: Colors.grey, thickness: 2),
           Expanded(
             child: ListView.builder(
               itemCount: comments.length,
@@ -88,16 +90,16 @@ class _CommentPageState extends State<CommentPage> {
               },
             ),
           ),
-          Divider(color: Colors.grey, thickness: 2),
+          const Divider(color: Colors.grey, thickness: 2),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   backgroundImage: AssetImage('assets/images/2.jpg'),
                   backgroundColor: Colors.white,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
@@ -109,7 +111,7 @@ class _CommentPageState extends State<CommentPage> {
                         Expanded(
                           child: TextField(
                             controller: _commentController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               hintText: 'Add a comment for post',
                               border: InputBorder.none,
                               contentPadding: EdgeInsets.symmetric(
@@ -118,11 +120,11 @@ class _CommentPageState extends State<CommentPage> {
                               ),
                               hintStyle: TextStyle(color: Colors.black),
                             ),
-                            style: TextStyle(color: Colors.black),
+                            style: const TextStyle(color: Colors.black),
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.send, color: Colors.black),
+                          icon: const Icon(Icons.send, color: Colors.black),
                           onPressed: () {
                             String comment = _commentController.text;
                             if (comment.isNotEmpty) {
@@ -145,12 +147,12 @@ class _CommentPageState extends State<CommentPage> {
 
   Widget _buildCommentTile(Comment comment) {
     return ListTile(
-      leading: CircleAvatar(
+      leading: const CircleAvatar(
         backgroundImage: AssetImage('assets/images/2.jpg'),
         backgroundColor: Colors.white,
       ),
-      title: Text(comment.userName, style: TextStyle(color: Colors.black)),
-      subtitle: Text(comment.comment, style: TextStyle(color: Colors.black)),
+      title: Text(comment.userName, style: const TextStyle(color: Colors.black)),
+      subtitle: Text(comment.comment, style: const TextStyle(color: Colors.black)),
       trailing: IconButton(
         icon: Icon(
           comment.isLiked ? Icons.favorite : Icons.favorite_border,

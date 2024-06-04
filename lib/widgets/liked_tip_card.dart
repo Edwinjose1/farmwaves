@@ -1,5 +1,7 @@
 
 
+// ignore_for_file: prefer_const_constructors, sized_box_for_whitespace
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application_0/Screens/description_screen.dart';
 import 'package:flutter_application_0/liked/bloc/liked_bloc.dart';

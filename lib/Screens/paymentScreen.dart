@@ -1,11 +1,12 @@
-import 'dart:async';
-import 'dart:convert';
+// ignore_for_file: use_build_context_synchronously, avoid_print, prefer_final_fields
 
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:flutter_application_0/constants/pallete.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:flutter_application_0/Screens/ordersucess.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class PaymentScreen extends StatefulWidget {
   final int orderId;
@@ -21,206 +22,349 @@ class _PaymentScreenState extends State<PaymentScreen> {
   double tipAmount = 0.0;
   double _totalAmount = 100.0; // Initial total amount
   double _gst = 0.18; // GST rate (18% in this case)
-  double _shippingCharge = 0.0; // Initial shipping charge
-  late bool _isPaymentEnabled;
-  late Timer _timer;
+  double _shippingCharge = 10.0; // Initial shipping charge
+  bool _isPaymentEnabled = false;
+  bool _isLoading = true; // Flag to track whether data is loading
+  Timer? _timer;
+  TextEditingController _couponController = TextEditingController();
+  String? _appliedCoupon;
 
   @override
   void initState() {
     super.initState();
-    _isPaymentEnabled = false; // Initially payment is disabled
     _razorpay = Razorpay();
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
     _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
-    // Start a timer to poll the server for updates every 5 seconds
-    _timer = Timer.periodic(Duration(seconds: 2), (timer) {
-      fetchOrderStatus(); // Fetch order status periodically
+    fetchOrderStatus();
+    _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
+      fetchOrderStatus();
     });
   }
 
   @override
   void dispose() {
-    super.dispose();
     _razorpay.clear();
-    _timer.cancel(); // Cancel the timer when the screen is disposed
+    _timer?.cancel();
+    _couponController.dispose();
+    super.dispose();
   }
 
-  void fetchOrderStatus() async {
+  Future<void> fetchOrderStatus() async {
     try {
-      // Perform an HTTP GET request to fetch the order status
-      final response = await http.get(Uri.parse('http://192.168.1.44:8000/api/orders/status/${widget.orderId}/'));
-      if (response.statusCode == 200) {
-        // Handle the response
-        final data = jsonDecode(response.body);
-        setState(() {
-          _isPaymentEnabled = data['isPaymentEnabled'];
-          _shippingCharge = data['shippingCharge'];
-        });
-      } else {
-        // Handle error response
-        print('Failed to fetch order status: ${response.statusCode}');
-      }
+      // Mocking the order status response for demonstration
+      final response = await Future.delayed(const Duration(seconds: 1), () {
+        return {
+          'status': 'approved',
+          'shippingCharge': _shippingCharge,
+        };
+      });
+
+      setState(() {
+        _isPaymentEnabled = response['status'] == 'approved';
+        _shippingCharge = response['shippingCharge'] as double? ?? 0.0;
+        _isLoading = false;
+      });
     } catch (e) {
-      // Handle network or other errors
       print('Error fetching order status: $e');
     }
   }
 
-  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+  Future<int?> updatePaymentStatus(int orderId) async {
+    try {
+      final response = await http.put(
+        Uri.parse(
+            'http://${Pallete.ipaddress}:8000/api/orders/status/update/$orderId/'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'status': 'payment success'}),
+      );
+      print(response.body);
+      if (response.statusCode == 200) {
+        print('Payment status updated successfully for order ID: $orderId');
+        return orderId;
+      } else {
+        print('Failed to update payment status: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Error updating payment status: $e');
+      return null;
+    }
+  }
+
+  Future<int?> updateOrderPaymentMethod(
+      int orderId, String paymentMethod) async {
+    try {
+      final response = await http.put(
+        Uri.parse(
+            'http://${Pallete.ipaddress}:8000/api/orders/payment/method/update/$orderId/'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'payment_method': paymentMethod}),
+      );
+      print(response.body);
+      if (response.statusCode == 200) {
+        print('Payment method updated successfully for order ID: $orderId');
+        return orderId;
+      } else {
+        print('Failed to update payment method: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('Error updating payment method: $e');
+      return null;
+    }
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    await updatePaymentStatus(widget.orderId);
+    await updateOrderPaymentMethod(widget.orderId, 'online');
     print("Payment Success: ${response.paymentId}");
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => Ordersuccesspage()),
+    );
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
     print("Payment Error: ${response.code.toString()} - ${response.message}");
+    // Handle payment error, e.g., display error message to user
   }
 
   void _handleExternalWallet(ExternalWalletResponse response) {
     print("External Wallet: ${response.walletName}");
+    // Handle external wallet payment, if needed
   }
 
   void openCheckout() {
-    if (_razorpay != null) {
-      var options = {
-        'key': 'rzp_test_X9hAUDDX3tQpM4',
-        'amount': ((_totalAmount + tipAmount) * 100).toInt(),
-        'name': 'Your App Name',
-        'description': 'Payment for items',
-        'prefill': {'contact': '', 'email': ''},
-        'external': {
-          'wallets': ['paytm']
-        }
-      };
-      try {
-        _razorpay.open(options);
-      } catch (e) {
-        debugPrint('Error: ${e.toString()}');
+    var options = {
+      'key': 'rzp_test_X9hAUDDX3tQpM4',
+      'amount': ((_totalAmount + tipAmount) * 100).toInt(),
+      'name': 'Quick Med',
+      'description': 'Payment for items',
+      'prefill': {'contact': '', 'email': ''},
+      'external': {
+        'wallets': ['paytm']
       }
+    };
+    try {
+      _razorpay.open(options);
+    } catch (e) {
+      debugPrint('Error: ${e.toString()}');
+    }
+  }
+
+  void applyCoupon(String couponCode) {
+    if (couponCode == "QUICKMED200") {
+      _appliedCoupon = couponCode;
+      setState(() {
+        _totalAmount -= 20; // Assuming a discount of 200
+      });
     } else {
-      debugPrint("Razorpay is not initialized");
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Invalid Coupon'),
+          content: const Text('The coupon code you entered is invalid.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Pallete.whiteColor,
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Lottie.asset(
-                'assets/animation/customersupport.json',
-                width: MediaQuery.of(context).size.width / 1.5,
-                height: MediaQuery.of(context).size.width / 1.5,
-                fit: BoxFit.cover,
-              ),
-              SizedBox(height: 30),
-              Text(
-                _isPaymentEnabled ? "Proceed with Payment" : "Processing Your Order",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 30),
-              // Bill details
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.grey[200],
-                ),
-                padding: EdgeInsets.all(20),
+      appBar: AppBar(
+        title: const Text('Payment'),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Bill Details",
+                    const Text(
+                      'Order Summary',
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          "Total Amount:",
-                          style: TextStyle(fontSize: 18),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _couponController,
+                            decoration: const InputDecoration(
+                              labelText: 'Apply Coupon',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
                         ),
-                        Text(
-                          "\$$_totalAmount",
-                          style: TextStyle(fontSize: 18),
+                        const SizedBox(width: 10),
+                        ElevatedButton(
+                          onPressed: () {
+                            applyCoupon(_couponController.text);
+                          },
+                          child: const Text('Apply'),
                         ),
                       ],
                     ),
-                    SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "GST (18%):",
-                          style: TextStyle(fontSize: 18),
+                    const SizedBox(height: 20),
+                    Card(
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Items',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 20), // Added spacing
+                            // Added spacing
+                            _buildItemRow('Product Name 1', '₹100.00'),
+                            const SizedBox(height: 10), // Added spacing
+                            _buildItemRow('Product Name 2', '₹20.00'),
+                            const SizedBox(height: 10), // Added spacing
+                            _buildItemRow('Product Name 3', '₹300.00'),
+                            const SizedBox(height: 20), // Added spacing
+                            const Divider(),
+                            const SizedBox(height: 20), // Added spacing
+                            _buildPriceRow('Subtotal', '₹600.00'),
+                            const SizedBox(height: 10), // Added spacing
+                            _buildPriceRow('Shipping Charge',
+                                '₹${_shippingCharge.toStringAsFixed(2)}'),
+                            const SizedBox(height: 10), // Added spacing
+                            _buildPriceRow('GST (18%)',
+                                '₹${(_totalAmount * _gst).toStringAsFixed(2)}'),
+                            if (_appliedCoupon != null) ...[
+                              const SizedBox(height: 10), // Added spacing
+                              _buildPriceRow(
+                                'Coupon Discount',
+                                '-₹20.00', // Assuming discount amount
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ],
+                            const SizedBox(height: 20), // Added spacing
+                            _buildPriceRow(
+                              'Total',
+                              '₹${(_totalAmount + _shippingCharge + (_totalAmount * _gst)).toStringAsFixed(2)}',
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ],
                         ),
-                        Text(
-                          "\$${(_totalAmount * _gst).toStringAsFixed(2)}",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ],
+                      ),
                     ),
-                    _shippingCharge != 0.0 ? SizedBox(height: 10) : Container(),
-                    _shippingCharge != 0.0
-                        ? Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Shipping Charge:",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                        Text(
-                          "\$$_shippingCharge",
-                          style: TextStyle(fontSize: 18),
-                        ),
-                      ],
-                    )
-                        : Container(),
-                    Divider(), // Divider for visual separation
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: () {
-                        openCheckout();
-                      },
-                      // onPressed: _isPaymentEnabled
-                      //     ? () {
-                      //   print(widget.orderId);
-                        
-                      // }
-                      //     : null,
+                      onPressed: _isPaymentEnabled
+                          ? () async {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Choose Payment Method'),
+                                  content: const Text('Select Payment Method'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () async {
+                                        await updatePaymentStatus(
+                                            widget.orderId);
+                                        await updateOrderPaymentMethod(
+                                            widget.orderId, 'cash');
+                                        // Navigator.pop(context);
+                                        // await updateOrderPaymentMethod(widget.orderId, 'cash on delivery');
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                Ordersuccesspage(),
+                                          ),
+                                        );
+                                      },
+                                      child: const Text('Cash on Delivery'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        openCheckout();
+                                      },
+                                      child: const Text('Online Payment'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                          : null,
                       style: ElevatedButton.styleFrom(
-                        primary: _isPaymentEnabled ? Colors.green : Colors.grey,
-                        onPrimary: Colors.white,
-                        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                       backgroundColor: _isPaymentEnabled ? Colors.green : Colors.grey,
+                        shadowColor: Colors.white,
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Proceed to Pay',
-                        style: TextStyle(fontSize: 20),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
+    );
+  }
+
+  Widget _buildItemRow(String itemName, String itemPrice) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(itemName),
+        Text(itemPrice),
+      ],
+    );
+  }
+
+  Widget _buildPriceRow(String label, String amount, {FontWeight? fontWeight}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: fontWeight ?? FontWeight.normal,
           ),
         ),
-      ),
+        Text(
+          amount,
+          style: TextStyle(
+            fontWeight: fontWeight ?? FontWeight.normal,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously, avoid_print
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -19,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     // Simulate a time-consuming operation, like loading data or initializing
     Timer(
-      Duration(seconds: 3), // Change the duration as needed
+      const Duration(seconds: 3), // Change the duration as needed
       () {
         // Navigate to the next screen after the splash screen duration
         checkUserLoggedIn(context);
@@ -29,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       backgroundColor: Pallete.darkgreenColor,
       // Customize the splash screen UI here
       body: Center(
@@ -53,7 +55,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> gotoLogin() async {
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 1));
     Navigator.of(context)
         .pushReplacement(MaterialPageRoute(builder: (context) => SignupScreen()));
   }
@@ -72,7 +74,7 @@ print(storeduserid);
         gotoLogin();
       } else {
         Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) => Home1()));
+            builder: (context) => const Home1()));
       }
 
     } else {

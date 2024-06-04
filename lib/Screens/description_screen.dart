@@ -25,7 +25,7 @@ class DescriptionScreen extends StatelessWidget {
     onTap: () {
       Navigator.of(context).pop();
     },
-    child: Icon(
+    child: const Icon(
       Icons.arrow_back_ios, // Use the Cupertino-style back button icon
       color: Colors.black,
     ),
@@ -33,7 +33,7 @@ class DescriptionScreen extends StatelessWidget {
 ),
       body: Container(
         // color: Pallete.greenColor,
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,19 +49,19 @@ class DescriptionScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 16.0),
+              const SizedBox(height: 16.0),
               Text(
                 heading,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 24,
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 8.0),
+              const SizedBox(height: 8.0),
               Text(
                 description,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.black,
                   fontSize: 18,
                 ),

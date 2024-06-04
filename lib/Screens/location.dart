@@ -1,3 +1,5 @@
+// ignore_for_file: sort_child_properties_last, prefer_final_fields, avoid_print
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_0/constants/pallete.dart';
@@ -44,7 +46,7 @@ class _MapPageState extends State<MapPage> {
       setState(() {
         _markers.clear(); // Clear existing markers
         _markers.add(Marker(
-          markerId: MarkerId('CurrentLocation'),
+          markerId: const MarkerId('CurrentLocation'),
           position: LatLng(
             latitude,
             longitude,
@@ -78,9 +80,9 @@ class _MapPageState extends State<MapPage> {
     setState(() {
       _markers.clear(); // Clear existing markers
       _markers.add(Marker(
-        markerId: MarkerId('SelectedLocation'),
+        markerId: const MarkerId('SelectedLocation'),
         position: location,
-        infoWindow: InfoWindow(title: 'Selected Location'),
+        infoWindow: const InfoWindow(title: 'Selected Location'),
       ));
       selectedLocation = location;
     });
@@ -141,7 +143,7 @@ class _MapPageState extends State<MapPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Map Demo'),
+        title: const Text('Map Demo'),
       ),
       body: Stack(
         children: [
@@ -151,7 +153,7 @@ class _MapPageState extends State<MapPage> {
             onMapCreated: (GoogleMapController controller) {
               mapController = controller;
             },
-            initialCameraPosition: CameraPosition(
+            initialCameraPosition: const CameraPosition(
               // Default initial position
               target: LatLng(0.0, 0.0),
               zoom: 1.0,
@@ -173,29 +175,29 @@ class _MapPageState extends State<MapPage> {
                         border: OutlineInputBorder(
                           borderRadius:
                               BorderRadius.circular(8), // Adjust border radius
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                               color: Colors.black), // Adjust border color
                         ),
-                        contentPadding: EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                             vertical: 14,
                             horizontal: 16), // Adjust content padding
                       ),
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16, // Adjust text size
                         color: Colors.black, // Adjust text color
                       ),
                     ),
                   ),
-                  SizedBox(width: 8.0),
+                  const SizedBox(width: 8.0),
                   ElevatedButton(
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         _searchPlace(_searchController.text);
                       }
                     },
-                    child: Text('Search',style:TextStyle(color: Colors.white) ,),
+                    child: const Text('Search',style:TextStyle(color: Colors.white) ,),
                     style: ElevatedButton.styleFrom(
-                      primary: Colors.black, // Change search button color
+                      backgroundColor: Colors.black, // Change search button color
                     ),
                   ),
                 ],
@@ -207,7 +209,7 @@ class _MapPageState extends State<MapPage> {
             right: 16.0,
             child: FloatingActionButton(backgroundColor: Colors.black,
               onPressed: _moveToCurrentLocation,
-              child: Icon(Icons.my_location),
+              child: const Icon(Icons.my_location),
             ),
           ),
         ],
@@ -215,8 +217,8 @@ class _MapPageState extends State<MapPage> {
       floatingActionButton: FloatingActionButton.extended(
         foregroundColor:Colors.black,
         onPressed: _saveLocation,
-        label: Text('Save Location',style: TextStyle(color: Colors.white),), // Change floating button label
-        icon: Icon(Icons.save,color: Colors.white,),
+        label: const Text('Save Location',style: TextStyle(color: Colors.white),), // Change floating button label
+        icon: const Icon(Icons.save,color: Colors.white,),
         backgroundColor:
       Colors.amber, // Change floating button background color
       ),

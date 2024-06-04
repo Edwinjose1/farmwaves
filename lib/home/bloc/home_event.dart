@@ -13,26 +13,18 @@ class HomeSearchClickedEvent extends HomeEvent {}
 
 
 class HomeTipLikedEvent extends HomeEvent {
-  final HealthTipDataModel LikedProducts;
+  // ignore: non_constant_identifier_names
+  // final HealthTipDataModel LikedProducts;
 
-  HomeTipLikedEvent({required this.LikedProducts});
+  // ignore: non_constant_identifier_names
+  // HomeTipLikedEvent({required this.LikedProducts});
 }
-
-
-
-
-
-
-
-
-
-
 
 class LikeditemPageNavigateEvent extends HomeEvent {}
 
 
 
 class UploadPrescriptionEvent extends HomeEvent {}
-
+class ApressEvent extends HomeEvent{}
 
 class ImageshowingPageEvent extends HomeEvent{}

@@ -2,16 +2,21 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_application_0/home/ui/original_home_screen.dart';
 import 'package:flutter_application_0/model/medicinedatamodel.dart';
-import 'package:flutter_application_0/order_deteails/detailsorderScreen.dart';
+// import 'package:flutter_application_0/order_deteails/detailsorderScreen.dart';
 import 'package:flutter_application_0/cart/bloc/cart_bloc.dart';
 import 'package:flutter_application_0/cart/widgets/medicinetile.dart';
 import 'package:flutter_application_0/constants/pallete.dart';
+import 'package:flutter_application_0/order_deteails/details_of_order_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CartScreen extends StatefulWidget {
-  const CartScreen({Key? key}) : super(key: key);
+  final BuildContext parentContext;
+
+  const CartScreen({Key? key, required this.parentContext}) : super(key: key);
 
   @override
   State<CartScreen> createState() => _CartScreenState();
@@ -34,12 +39,16 @@ class _CartScreenState extends State<CartScreen> {
         backgroundColor: Pallete.whiteColor,
         leading: GestureDetector(
           onTap: () {
-            Navigator.of(context).pop();
+           
+
+           Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (context) => Home1()));
+                
           },
           child: Container(
             color: Colors.white,
-            padding: EdgeInsets.all(8.0), // Adjust padding as needed
-            child: Icon(
+            padding: const EdgeInsets.all(8.0), // Adjust padding as needed
+            child: const Icon(
               Icons.arrow_back_ios, // Use the Cupertino-style back button icon
               color: Colors.black,
             ),
@@ -49,11 +58,13 @@ class _CartScreenState extends State<CartScreen> {
       body: BlocConsumer<CartBloc, CartState>(
         bloc: cartBloc,
         listener: (context, state) {
+        
           // Listener implementation if needed
         },
         builder: (context, state) {
+        
           if (state is CartLoadingState) {
-            return Center(
+            return const Center(
               child: CircularProgressIndicator(), // Circular Progress Indicator
             );
           } else if (state is CartSuccessState) {
@@ -74,14 +85,16 @@ class _CartScreenState extends State<CartScreen> {
               totalAmount += item.price * item.quantity;
             }
             return Column(
+
               children: [
+               
                 Expanded(
                   child: ListView.builder(
                     itemCount: state.cartitems.length,
                     itemBuilder: (context, index) {
                       final med = state.cartitems[index];
 
-                      return MedicineTile(
+                      return MedicineTile(ctx: widget.parentContext,
                         medicine: med,
                         cartBloc: cartBloc,
                         onItemRemoved: rebuildScreen,
@@ -89,7 +102,7 @@ class _CartScreenState extends State<CartScreen> {
                     },
                   ),
                 ),
-                buildTotalAmount(totalAmount),
+                // buildTotalAmount(totalAmount),
                 const SizedBox(height: 20),
                 Container(
                   width: double.infinity,
@@ -101,9 +114,8 @@ class _CartScreenState extends State<CartScreen> {
                         MaterialPageRoute(
                           builder: (context) => ItemDetailsPage(
                             medicalDetails: state.cartitems,
-                            totalAmount: totalAmount,
-                            selectedAddress:
-                                "Your selected address here", // Pass the selected address here
+                           
+                             // Pass the selected address here
                           ),
                         ),
 
@@ -132,26 +144,37 @@ class _CartScreenState extends State<CartScreen> {
   }
 
 
-  Widget buildTotalAmount(double totalAmount) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Text(
-        'Total Amount: $totalAmount Rs',
-        style: const TextStyle(
-          color: Colors.black,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
+ 
 }
 
+// Future<void> remove(String productId) async {
+//   final sharedpref = await SharedPreferences.getInstance();
+//   String? storeduserid = sharedpref.getString('user_id');
+
+
+
+//   http.Response response = await http.delete(
+//     Uri.parse(
+//         'http://${Pallete.ipaddress}:8000/api/cart/remove/$storeduserid/product/$productId/'),
+//     headers: <String, String>{
+//       'Content-Type': 'application/json; charset=UTF-8',
+//     },
+//   );
+
+//   if (response.statusCode == 201) {
+
+//     // ignore: avoid_print
+//     print('Product added to cart successfully.');
+//   } else {
+//     // ignore: avoid_print
+//     print('Failed to add product to cart. Error: ${response.body}');
+//   }
+// }
 
 
 Future<List<Medicine>> fetchMedicinesFromApi() async {
   final response =
-      await http.get(Uri.parse('http://192.168.1.44:8080/api/products'));
+      await http.get(Uri.parse('http://${Pallete.ipaddress}:8080/api/products'));
 
   if (response.statusCode == 200) {
     final List<dynamic> data = json.decode(response.body);

@@ -1,8 +1,11 @@
+// ignore_for_file: library_private_types_in_public_api
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_application_0/Screens/paymentScreen.dart';
 import 'package:flutter_application_0/constants/pallete.dart';
+import 'package:flutter_application_0/home/ui/original_home_screen.dart';
 import 'package:lottie/lottie.dart';
 
 class OrderProcessingPage extends StatefulWidget {
@@ -22,11 +25,21 @@ class _OrderProcessingPageState extends State<OrderProcessingPage> {
     super.initState();
     _isLoading = true;
     // Start a timer to hide the loading indicator after 1 second
-    Timer(Duration(seconds: 1), () {
+    Timer(const Duration(seconds: 1), () {
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
+      }
+    });
+     Timer(const Duration(seconds: 5), () {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const Home1(),
+          ),
+        );
       }
     });
   }
@@ -39,7 +52,7 @@ class _OrderProcessingPageState extends State<OrderProcessingPage> {
         children: [
           Center(
             child: _isLoading
-                ? CircularProgressIndicator() // Show loading indicator
+                ? const CircularProgressIndicator() // Show loading indicator
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -49,11 +62,11 @@ class _OrderProcessingPageState extends State<OrderProcessingPage> {
                         height: MediaQuery.of(context).size.width / 1.2,
                         fit: BoxFit.cover,
                       ),
-                      SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.all(20.0),
+                      const SizedBox(height: 20),
+                      const Padding(
+                        padding: EdgeInsets.all(20.0),
                         child: Text(
-                          "Thank you for your order! Our back end team is currently processing it. Our pharmacy team will be in touch with you soon. Please wait patiently for further updates.",
+                          "Your order is being processed. Our pharmacy team will deliver soon. Thank you for your patience and trust in our service.",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 22,
@@ -72,25 +85,23 @@ class _OrderProcessingPageState extends State<OrderProcessingPage> {
             child: Center(
               child: ElevatedButton(
                 onPressed: () {
-                  print(widget.orderId);
-                  // Handle button press
-                  // Example: Navigate to another screen
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PaymentScreen(orderId: widget.orderId),
-                    ),
-                  );
+                  Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const Home1(),
+          ),
+        );
+                 
                 },
                 style: ElevatedButton.styleFrom(
-                  primary: Color.fromARGB(255, 46, 190, 51), // Background color
-                  onPrimary: Colors.white, // Text color
-                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16), // Button padding
+                  backgroundColor: const Color.fromARGB(255, 46, 190, 51), // Background color
+                  shadowColor: Colors.white, // Text color
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16), // Button padding
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30), // Button border radius
                   ),
                 ),
-                child: Text(
+                child: const Text(
                   '   Next   ',
                   style: TextStyle(fontSize: 18),
                 ),

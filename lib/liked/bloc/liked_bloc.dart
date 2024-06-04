@@ -16,6 +16,7 @@ class LikedBloc extends Bloc<LikedEvent, LikedState> {
   }
      FutureOr<void> likedinitialEvent(
       LikedinitialEvent event,Emitter<LikedState> emit){
+        // ignore: avoid_print
         print('HAI DA ENTHA ITHU INGANE');
         emit(LikedSucessState(likeditems: likeditems));
       }

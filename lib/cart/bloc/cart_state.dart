@@ -3,26 +3,48 @@ part of 'cart_bloc.dart';
 @immutable
 sealed class CartState {}
 
-class CartActionState extends CartState {}
+abstract class CartActionState extends CartState {}
 
 class CartInitial extends CartState {}
+
 class CartLoadingState extends CartState {
   CartLoadingState();
 }
 
-class CartSuccessState extends CartState { 
-  final List<Medicine> cartitems;
+class CartItemRemoved extends CartState {}
 
-  CartSuccessState({required this.cartitems});
 
-  // Factory constructor to create a new CartSuccessState with updated cart items
-  factory CartSuccessState.updatedList(List<Medicine> updatedItems) {
-    return CartSuccessState(cartitems: updatedItems);
-  }  
+class CartSuccessState extends CartState {
+  
+  final List<CartMedicine> cartitems;
+  final int matchingProductCount;
+  
+
+  CartSuccessState({required this.cartitems, required this.matchingProductCount});
+  
 }
+class CartProductIdsState extends CartState {
+ 
+}
+// class CartAddedActioinState extends CartActionState{}
+  //  final List<String> productIds;
+
+  // CartAddedActioinState({required this.productIds});
+
+
+  // @override
+  // List<Object> get props => [productIds];
+
+// }
+
 
 class CartErrorState extends CartState {
   final String error;
 
   CartErrorState({required this.error});
 }
+class Cartitemnumberss extends CartState{
+  final int val;
+
+
+  Cartitemnumberss({required this.val});}

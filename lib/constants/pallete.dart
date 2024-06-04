@@ -9,4 +9,9 @@ class Pallete {
   static const Color whiteColor = Colors.white;
   static const Color greenColor = Color(0xFFA7CF38);
   static const Color darkgreenColor= Color(0xFF0A8579) ;
+  static const String  ipaddress="192.168.1.44"; 
+  
 }
+// 192.168.43.143
+// 192.168.1.44
+//192.168.1.38

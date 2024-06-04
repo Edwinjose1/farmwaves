@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 // import 'package:flutter_application_0/bloc/liked_bloc/bloc/liked_bloc.dart';
 import 'package:flutter_application_0/liked/bloc/liked_bloc.dart';
@@ -27,12 +25,12 @@ class _LikedState extends State<Liked> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Liked Items'),
+        title: const Text('Liked Items'),
       ),
       body: BlocConsumer<LikedBloc, LikedState>(
         bloc: likedBloc,
         listener: (context, state) {
-          // TODO: Implement listener if needed
+       
         },
         listenWhen: (previous, current) => current is LikedActionState,
         buildWhen: (previous, current) => current is! LikedActionState,
@@ -44,6 +42,7 @@ class _LikedState extends State<Liked> {
                 itemCount: successState.likeditems.length,
                 itemBuilder: (context, index) {
                   final tip = successState.likeditems[index];
+                  // ignore: avoid_print
                   print('lfklasfkljaslfjlasdjfljasf${successState.likeditems.length}');
                   return LikedtileWidget(
                     healthTipDataModel: tip,
@@ -55,7 +54,7 @@ class _LikedState extends State<Liked> {
                   );
                 },
               );
-              break;
+             
             default:
               return Container();
           }

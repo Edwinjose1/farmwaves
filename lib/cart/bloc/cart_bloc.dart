@@ -7,73 +7,233 @@ import 'package:flutter_application_0/model/cartitemmodel.dart';
 import 'package:flutter_application_0/model/medicinedatamodel.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_application_0/constants/pallete.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
 part 'cart_event.dart';
 part 'cart_state.dart';
 
+// class CartBloc extends Bloc<CartEvent, CartState> {
+//   List<CartItem> cartitems = [];
+//   List<String> cartProductIds = [];
+
+//   CartBloc() : super(CartInitial()) {
+//     on<CartInitialEvent>(_cartInitialEvent);
+
+//    on<RemoveEvent>((event, emit) async {
+//     await _removeFromCartApi(event.removingProductid, emit);
+//   });
+
+//   }
+// int value =0;
+// FutureOr<void> cartitemnumber(  Cartitemnumber event, Emitter<CartState> emit, {required int val}) async {
+// value=value+1;
+// emit((Cartitemnumberss(val: value)));
+// }
+// // ...
+
+// void _emitCartProductIds(Emitter<CartState> emit) {
+//     cartProductIds = cartitems.map((item) => item.productId).toList();
+//     emit(CartProductIdsState(productIds: cartProductIds));
+//   }
+
+// void _cartInitialEvent(CartInitialEvent event, Emitter<CartState> emit) async {
+//   print('helooooooooo');
+//   try {
+//     final List<Medicine> medicines = await fetchMedicinesFromApi();
+//     // ignore: avoid_print
+//     print(medicines[1].name);
+
+//     final sharedpref = await SharedPreferences.getInstance();
+//     String? storeduserid = sharedpref.getString('user_id');
+//     // ignore: avoid_print
+//     print(storeduserid);
+//     String userId = storeduserid.toString();
+//     print("sfsdfsf");
+//     // ignore: avoid_print
+//     print("${userId}jjjj");
+//     final response = await http.post(
+//       Uri.parse('http://${Pallete.ipaddress}:8000/api/cart/'),
+//       body: {'user_id': userId},
+//     );
+
+//     if (response.statusCode == 200) {
+
+// // void _emitCartProductIds(Emitter<CartState> emit) {
+//     cartProductIds = cartitems.map((item) => item.productId).toList();
+//     emit(CartProductIdsState(productIds: cartProductIds));
+//   // }
+//       final List<dynamic> data = json.decode(response.body);
+//       List<CartItem> cartItems = [];
+//       // ignore: avoid_print
+//       print("aljdflakjsdfkjas$cartitems");
+
+//       for (var item in data) {
+//         int productId = item['product_id'];
+//         int quantity = item['quantity'];
+
+//         Medicine? medicine = medicines.firstWhere((m) => m.id == productId);
+
+//         if (medicine != null) {
+//           cartItems.add(CartItem(
+//             productId: medicine.id.toString(),
+//             quantity: quantity,
+//           ));
+//         } else {
+//           // ignore: avoid_print
+//           print('Medicine with product_id $productId not found.');
+//         }
+//       }
+
+//       List<CartMedicine> matchingMedicines = medicines
+//           .where((medicine) => cartItems.any(
+//               (cartItem) => cartItem.productId == medicine.id.toString()))
+//           .map((medicine) {
+//         int quantity = cartItems
+//             .firstWhere(
+//                 (cartItem) => cartItem.productId == medicine.id.toString())
+//             .quantity;
+//         return CartMedicine(
+//           id: medicine.id,
+//           name: medicine.name,
+//           price: medicine.price,
+//           company: medicine.company,
+//           quantity: quantity,
+//         );
+//       }).toList();
+
+//       // ignore: avoid_print
+//       print(matchingMedicines[1].name);
+//       // ignore: avoid_print
+//       print(matchingMedicines.length);
+//       emit(CartProductIdsState(productIds: cartProductIds));
+
+//       emit(CartSuccessState(cartitems: matchingMedicines, matchingProductCount: matchingMedicines.length));
+//     } else {
+//       emit(CartErrorState(error: 'Failed to load cart data'));
+//     }
+//   } catch (e) {
+//     emit(CartErrorState(error: 'Exception: $e'));
+//   }
+// }
+
+// Future<void> _removeFromCartApi(String productId, Emitter<CartState> emit) async {
+//   try {
+//     final sharedPref = await SharedPreferences.getInstance();
+//     String? storedUserId = sharedPref.getString('user_id');
+//     if (storedUserId == null) {
+//       emit(CartErrorState(error: 'User ID not found'));
+//       return;
+//     }
+
+//     final response = await http.delete(
+//       Uri.parse('http://${Pallete.ipaddress}:8000/api/cart/remove/$storedUserId/product/$productId/'),
+//       headers: <String, String>{
+//         'Content-Type': 'application/json; charset=UTF-8',
+//       },
+//     );
+
+//     // If removal is successful, emit a state indicating success or update the cart
+//     // emit(CartItemRemovedState(productId: productId));
+//   } catch (e) {
+//     emit(CartErrorState(error: 'Exception: $e'));
+//   }
+// }
+
+// }
+// class CartMedicine extends Medicine {
+//   int quantity;
+
+//   CartMedicine({
+//     required int id,
+//     required String name,
+//     required double price,
+//     required String company,
+//     required this.quantity,
+//   }) : super(
+//             id: id,
+//             name: name,
+//             price: price,
+//             quantity: quantity,
+//             company: company);
+// }
+// part of 'cart_event.dart';
+// part of 'cart_state.dart';
+
 class CartBloc extends Bloc<CartEvent, CartState> {
   List<CartItem> cartitems = [];
-
+  List<String> cartProductIds = [];
   CartBloc() : super(CartInitial()) {
-    on<CartInitialEvent>(_cartInitialEvent);
-    on<RemoveitemfromAddedcartEvent>(_removeItemFromCart);
+    on<CartInitialEvent>(cartInitialEvent);
+    // on<CartTipLikedEvent>(carttiplikedevent);
+    on<RemoveEvent>((event, emit) async {
+      await _removeFromCartApi(event.removingProductid, emit);
+    });
   }
 
-// ...
-  void _cartInitialEvent(
-      CartInitialEvent event, Emitter<CartState> emit) async {
-        print('helooooooooo');
-    try {
-      // Fetch medicines from the API
-      final List<Medicine> medicines = await fetchMedicinesFromApi();
-      print(medicines[1].name);
+  int value = 0;
 
-      // Fetch data from the API without passing user ID in the URL
-       final sharedpref = await SharedPreferences.getInstance();
-        String? storeduserid = sharedpref.getString('user_id');
-        print(storeduserid);
-      String userId = storeduserid.toString(); // You can replace "1" with the actual user ID
-      print("sfsdfsf");
-      print("${userId}jjjj");
+  FutureOr<void> cartitemnumber(Cartitemnumber event, Emitter<CartState> emit,
+      {required int val}) async {
+    value = value + 1;
+    emit((Cartitemnumberss(val: value)));
+  }
+//  void _emitCartProductIds(Emitter<CartState> emit) {
+//     cartProductIds = cartitems.map((item) => item.productId).toList();
+//     print('Emitting CartProductIdsState with productIds: $cartProductIds');
+//     emit(CartProductIdsActionstate(productIds: cartProductIds));
+//   }
+
+  FutureOr<void> cartInitialEvent(
+      CartInitialEvent event, Emitter<CartState> emit) async {
+    // print('Starting cart initialization...');
+    // emit(CartAddedActioinState(productIds: cartProductIds));
+    try {
+      final List<Medicine> medicines = await fetchMedicinesFromApi();
+      // print('Fetched medicines: ${medicines.length}');
+
+      final sharedPref = await SharedPreferences.getInstance();
+      String? storedUserId = sharedPref.getString('user_id');
+      if (storedUserId == null) {
+        emit(CartErrorState(error: 'User ID not found in shared preferences'));
+        return;
+      }
+      print('Stored user ID: $storedUserId');
+
       final response = await http.post(
-        Uri.parse('http://192.168.1.44:8000/api/cart/'),
-        body: {'user_id': userId}, // Send user ID in the request body
+        Uri.parse('http://${Pallete.ipaddress}:8000/api/cart/'),
+        body: {'user_id': storedUserId},
       );
 
+      // print('API response status: ${response.statusCode}');
+      // print('API response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        // If the request is successful, parse the response 
-        // and add product_ids to cartItems
         final List<dynamic> data = json.decode(response.body);
-        List<CartItem> cartItems = [];
-        print("aljdflakjsdfkjas${cartitems}");
+        cartitems.clear();
 
         for (var item in data) {
           int productId = item['product_id'];
           int quantity = item['quantity'];
 
-          // Find the corresponding Medicine object based on productId
           Medicine? medicine = medicines.firstWhere((m) => m.id == productId);
 
           if (medicine != null) {
-            // If a matching Medicine object is found, add it to cartItems
-            cartItems.add(CartItem(
+            cartitems.add(CartItem(
               productId: medicine.id.toString(),
               quantity: quantity,
             ));
           } else {
-            // Handle the case where no matching Medicine object is found
             print('Medicine with product_id $productId not found.');
           }
         }
 
-        // Get a list of CartMedicine instances that match the product_ids in cartItems
         List<CartMedicine> matchingMedicines = medicines
-            .where((medicine) => cartItems.any(
+            .where((medicine) => cartitems.any(
                 (cartItem) => cartItem.productId == medicine.id.toString()))
             .map((medicine) {
-          int quantity = cartItems
+          int quantity = cartitems
               .firstWhere(
                   (cartItem) => cartItem.productId == medicine.id.toString())
               .quantity;
@@ -85,41 +245,60 @@ class CartBloc extends Bloc<CartEvent, CartState> {
             quantity: quantity,
           );
         }).toList();
+        cartProductIds = cartitems.map((item) => item.productId).toList();
 
-        print(
-            matchingMedicines); // Print the list of matching Medicine instances
+        // emit(CartAddedActioinState(productIds: cartProductIds));
 
-        emit(CartSuccessState(cartitems: matchingMedicines));
+        // _emitCartProductIds(emit);
+        // print('Matching medicines: ${matchingMedicines.length}');
+        emit(CartSuccessState(
+            cartitems: matchingMedicines,
+            matchingProductCount: matchingMedicines.length));
       } else {
-        // If the request fails, emit an error state
         emit(CartErrorState(error: 'Failed to load cart data'));
       }
     } catch (e) {
-      // If an exception occurs, emit an error state
       emit(CartErrorState(error: 'Exception: $e'));
     }
   }
 
-  void _removeItemFromCart(
-      RemoveitemfromAddedcartEvent event, Emitter<CartState> emit) {
-    // Remove the item from the data source
-    removeFromCart(event.removingProduct);
+  Future<void> _removeFromCartApi(
+      String productId, Emitter<CartState> emit) async {
+    try {
+      final sharedPref = await SharedPreferences.getInstance();
+      String? storedUserId = sharedPref.getString('user_id');
+      if (storedUserId == null) {
+        emit(CartErrorState(error: 'User ID not found'));
+        return;
+      }
 
-    // Filter out the removed item from the cartitems list
-    final updatedCartItems =
-        cartitems.where((item) => item != event.removingProduct).toList();
+      final response = await http.delete(
+        Uri.parse(
+            'http://${Pallete.ipaddress}:8000/api/cart/remove/$storedUserId/product/$productId/'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      );
 
-    // Emit a new state with the updated cartitems list
-    // emit(CartSuccessState(cartitems: updatedCartItems));
+      // If removal is successful, update the cart items and emit the updated state
+      if (response.statusCode == 200) {
+        cartitems.removeWhere((item) => item.productId == productId);
+        // _emitCartProductIds(emit);
+        // emit(CartItemRemovedState(productId: productId));
+      } else {
+        emit(CartErrorState(error: 'Failed to remove product from cart'));
+      }
+    } catch (e) {
+      emit(CartErrorState(error: 'Exception: $e'));
+    }
   }
 }
+// FutureOr<void> carttiplikedevent(
+//     CartTipLikedEvent event, Emitter<CartState> emit) async {
+//       print('myrrrrrrrrrrrrrrr');
+//   emit(CartAddedActioinState());
+// }
 
-// Function to remove item from data source
-void removeFromCart(Medicine removingProduct) {
-  // Implement logic to remove item from your data source
-  // For example, if `carteditems` is your data source:
-  carteditems.remove(removingProduct);
-}
 
 class CartMedicine extends Medicine {
   int quantity;

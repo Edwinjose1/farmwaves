@@ -23,6 +23,7 @@ class HealthTipItem extends StatefulWidget {
   }) : super(key: key);
 
   @override
+  // ignore: library_private_types_in_public_api
   _HealthTipItemState createState() => _HealthTipItemState();
 }
 
@@ -120,8 +121,8 @@ class _HealthTipItemState extends State<HealthTipItem> {
                         setState(() {
                           _isLiked = !_isLiked; // Toggle the liked state
                         });
-                        widget.homeBloc.add(HomeTipLikedEvent(
-                            LikedProducts: widget.healthTipDataModel));
+                        // widget.homeBloc.add(HomeTipLikedEvent(
+                        //     LikedProducts: widget.healthTipDataModel));
                       },
                     ),
                     const Text(
