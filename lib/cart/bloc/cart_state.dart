@@ -16,7 +16,7 @@ class CartItemRemoved extends CartState {}
 
 class CartSuccessState extends CartState {
   
-  final List<CartMedicine> cartitems;
+  final List<Medicine> cartitems;
   final int matchingProductCount;
   
 
@@ -26,17 +26,6 @@ class CartSuccessState extends CartState {
 class CartProductIdsState extends CartState {
  
 }
-// class CartAddedActioinState extends CartActionState{}
-  //  final List<String> productIds;
-
-  // CartAddedActioinState({required this.productIds});
-
-
-  // @override
-  // List<Object> get props => [productIds];
-
-// }
-
 
 class CartErrorState extends CartState {
   final String error;

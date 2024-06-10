@@ -1,13 +1,14 @@
-// ignore_for_file: use_build_context_synchronously, avoid_print, avoid_unnecessary_containers, unused_element, no_leading_underscores_for_local_identifiers, library_private_types_in_public_api, prefer_const_constructors_in_immutables
 
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_0/Screens/change_address.dart';
 import 'package:flutter_application_0/Screens/orderprocessingpage.dart';
+import 'package:flutter_application_0/Screens/profile.dart';
 import 'package:flutter_application_0/cart/widgets/medicinetile.dart';
-import 'package:flutter_application_0/order_deteails/bloc/item_bloc.dart';
+// import 'package:flutter_application_0/order_deteails/bloc/item_bloc.dart';
 import 'package:flutter_application_0/constants/pallete.dart';
+import 'package:flutter_application_0/home/ui/original_home_screen.dart';
 import 'package:flutter_application_0/model/medicinedatamodel.dart';
 import 'package:flutter_application_0/order_deteails/addresssection.dart';
 import 'package:flutter_application_0/order_deteails/medicineitems.dart';
@@ -16,13 +17,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ItemDetailsPage extends StatefulWidget {
   final List<Medicine> medicalDetails;
 
-  // ignore: use_key_in_widget_constructors
   ItemDetailsPage({
     required this.medicalDetails,
   });
@@ -32,12 +30,10 @@ class ItemDetailsPage extends StatefulWidget {
 }
 
 class _ItemDetailsPageState extends State<ItemDetailsPage> {
-  late WebSocketChannel channel;
-  // ignore: prefer_final_fields
   List<XFile> _images = [];
-  final bool _prescriptionSkipped = false;
+  bool _prescriptionSkipped = false;
   late int userId;
-  AddressDetails? addressDetails;
+  UserDetails? addressDetails;
   bool _isLoading = true;
   bool _isButtonDisabled = false;
 
@@ -45,6 +41,7 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
   void initState() {
     super.initState();
     _loadData();
+
   }
 
   Future<void> _loadData() async {
@@ -62,22 +59,17 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
       setState(() {
         userId = int.tryParse(userIdString) ?? 0;
       });
-      _loadAddressDetails();
     }
-  }
-
-  Future<void> _loadAddressDetails() async {
-    try {
-      List<AddressDetails> addressDetailsList =
-          await ApiService.fetchAddressDetails(userId);
-      if (addressDetailsList.isNotEmpty) {
-        setState(() {
-          addressDetails = addressDetailsList.first;
-        });
-      }
+ 
+ try {
+    final userDetails = await fetchUserDetails(userId);
+    setState(() {
+      addressDetails = userDetails as UserDetails?;
+    });
     } catch (e) {
-      print('Failed to load address details: $e');
-    }
+    // Handle any errors that occurred during the fetch operation
+    print('Error fetching user details: $e');
+  }
   }
 
   double calculateTotalAmount(List<Medicine> medicalDetails) {
@@ -87,172 +79,193 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
     }
     return totalAmount;
   }
+ String baseUrl = 'http://${Pallete.ipaddress}:8000/api/user/';
+
+   Future<UserDetails> fetchUserDetails(int userId) async {
+    final response = await http.get(Uri.parse('${baseUrl}details/$userId/'));
+
+    if (response.statusCode == 200) {
+      print(response.body);
+      return UserDetails.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load user details');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    
     double screenHeight = MediaQuery.of(context).size.height;
     double totalAmount = calculateTotalAmount(widget.medicalDetails);
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  if (addressDetails == null)
-                    Column(
-                      children: [
-                        const Center(child: Text('No address details available')),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => AddressPage()),
-                            );
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                              height: MediaQuery.of(context).size.height * 0.10,
-                              width: double.infinity,
-                              color: const Color.fromARGB(255, 237, 235, 235),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.location_on,
-                                    color: Colors.black,
-                                  ),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    'Select Address',
-                                    style: TextStyle(color: Colors.black),
-                                  ),
-                                ],
+return WillPopScope(
+      onWillPop: () async {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => Home1()),
+          (Route<dynamic> route) => false,
+        );
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(10.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    if (addressDetails == null)
+                      Column(
+                        children: [
+                        
+                          GestureDetector(
+                            onTap: () async {
+                              final selectedAddress = await Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => AddressPage(medicalDetails: widget.medicalDetails,)),
+                              );
+                              if (selectedAddress != null && selectedAddress is UserDetails) {
+                                _onAddressChanged(selectedAddress);
+                              }
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Container(
+                                height: MediaQuery.of(context).size.height * 0.10,
+                                width: double.infinity,
+                                color: const Color.fromARGB(255, 237, 235, 235),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      color: Colors.black,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'Select Address',
+                                      style: TextStyle(color: Colors.black),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    )
-                  else
-                    AddressSection(
-                      addressDetails: addressDetails!,
-                      onAddressChanged: _onAddressChanged,
-                    ),
-                  GestureDetector(
-                    onTap: () {
-                      openImagePickerBottomSheet();
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        height: MediaQuery.of(context).size.height * 0.10,
-                        width: double.infinity,
-                        color: const Color.fromARGB(255, 237, 235, 235),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.fromLTRB(10, 0, 0, 0),
-                              child: Icon(
-                                Icons.file_upload_outlined,
-                                color: Colors.black,
-                              ),
-                            ),
-                            const Text(
-                              'Upload prescription here',
-                              style: TextStyle(color: Colors.black),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  color: Pallete.darkgreenColor,
-                                ),
-                                alignment: Alignment.center,
-                                height: 35,
-                                width: 120,
-                                child: const Text(
-                                  "Upload Now",
+                        ],
+                      )
+                    else
+                      AddressSection(medicalDetails: widget.medicalDetails,
+                        addressDetails: addressDetails,
+                        onAddressChanged: _onAddressChanged,
+                      ),
+                    GestureDetector(
+                      onTap: () {
+                        openImagePickerBottomSheet();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Container(
+                          height: MediaQuery.of(context).size.height * 0.10,
+                          width: double.infinity,
+                          color: const Color.fromARGB(255, 237, 235, 235),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.fromLTRB(10, 0, 0, 0),
+                                child: Icon(
+                                  Icons.file_upload_outlined,
+                                  color: Colors.black,
                                 ),
                               ),
-                            )
-                          ],
+                              const Text(
+                                'Upload prescription here',
+                                style: TextStyle(color: Colors.black),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    color: Pallete.darkgreenColor,
+                                  ),
+                                  alignment: Alignment.center,
+                                  height: 35,
+                                  width: 120,
+                                  child: const Text(
+                                    "Upload Now",
+                                  ),
+                                ),
+                              )
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  _buildImageGrid(),
-                  Buildsection(
-                    heading: 'Medicine Details',
-                    content: ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: widget.medicalDetails.length,
-                      itemBuilder: (context, index) {
-                        final med = widget.medicalDetails[index];
-                        return MedicineItem(
-                          onRemoveQuantity: () async {
-                            if (_isButtonDisabled) return;
-                            setState(() {
-                              _isButtonDisabled = true;
-                            });
-                            if (med.quantity > 0) {
-                              await updateQuantity(
-                                  med.id, userId.toString(), med.quantity - 1);
+                    _buildImageGrid(),
+                    Buildsection(
+                      heading: 'Medicine Details',
+                      content: ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: widget.medicalDetails.length,
+                        itemBuilder: (context, index) {
+                          final med = widget.medicalDetails[index];
+                          return MedicineItem(
+                            onRemoveQuantity: () async {
+                              if (_isButtonDisabled) return;
                               setState(() {
-                                med.quantity -= 1;
+                                _isButtonDisabled = true;
                               });
-                            }
-                            setState(() {
-                              _isButtonDisabled = false;
-                            });
-                          },
-                          name: med.name,
-                          quantity: med.quantity,
-                          onAddQuantity: () async {
-                            setState(() {
-                              _isButtonDisabled = true;
-                            });
-                            if (med.quantity < 10) {
-                              await updateQuantity(
-                                  med.id, userId.toString(), med.quantity + 1);
+                              if (med.quantity > 0) {
+                                await updateQuantity(med.id, userId.toString(), med.quantity - 1);
+                                setState(() {
+                                  med.quantity -= 1;
+                                });
+                              }
                               setState(() {
-                                med.quantity += 1;
+                                _isButtonDisabled = false;
                               });
-                            }
-                            setState(() {
-                              _isButtonDisabled = false;
-                            });
-                          },
-                        );
-                      },
+                            },
+                            name: med.name,
+                            quantity: med.quantity,
+                            onAddQuantity: () async {
+                              setState(() {
+                                _isButtonDisabled = true;
+                              });
+                              if (med.quantity < 10) {
+                                await updateQuantity(med.id, userId.toString(), med.quantity + 1);
+                                setState(() {
+                                  med.quantity += 1;
+                                });
+                              }
+                              setState(() {
+                                _isButtonDisabled = false;
+                              });
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                  Buildsection(
-                    heading: 'Bill Details',
-                    content: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        BillItem(
-                          label: 'Total Amount',
-                          amount: 'Rs. $totalAmount',
-                        ),
-                      ],
+                    Buildsection(
+                      heading: 'Bill Details',
+                      content: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          BillItem(
+                            label: 'Total Amount',
+                            amount: 'Rs. $totalAmount',
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-      bottomNavigationBar:
-          _isLoading ? null : buildBottomNavigationBar(totalAmount),
+        bottomNavigationBar: _isLoading ? null : buildBottomNavigationBar(totalAmount),
+      ),
     );
   }
 
@@ -342,17 +355,14 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
 
   Future<void> _placeOrder(double totalAmount) async {
     Map<String, dynamic> orderData = await constructOrderData(totalAmount);
-    int? orderId = await sendOrderData(orderData,_images);
+    int? orderId = await sendOrderData(orderData, _images);
     print(orderId);
     print(orderData);
     if (orderId != null) {
-      await Navigator.push(
+      Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-            builder: (context) => OrderProcessingPage(
-                  orderId: orderId,
-
-                )),
+        MaterialPageRoute(builder: (context) => OrderProcessingPage()),
+        (Route<dynamic> route) => false,
       );
       setState(() {});
     } else {
@@ -404,11 +414,11 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
     String? storedUserId = prefs.getString('user_id');
 
     Map<String, dynamic> deliveryAddress = {
-      "phone": addressDetails!.phone,
-      "name": addressDetails!.name,
-      "pincode": addressDetails!.pincode,
-      "house_no": addressDetails!.houseNo,
-      "locality": addressDetails!.locality,
+      "phone": addressDetails!.phoneNumber,
+      "name": addressDetails!.phoneNumber,
+      "pincode": addressDetails!.address1,
+      "house_no": addressDetails!.address2,
+      "locality": addressDetails!.lastName,
       "type": true
     };
 
@@ -459,7 +469,11 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
   Future<void> pickImagesFromGallery() async {
     try {
       final ImagePicker _picker = ImagePicker();
-      List<XFile>? galleryImages = await _picker.pickMultiImage();
+      List<XFile>? galleryImages = await _picker.pickMultiImage(
+        imageQuality: 99,
+        maxHeight: 600,
+        maxWidth: 800,
+      );
       if (galleryImages != null && galleryImages.isNotEmpty) {
         setState(() {
           _images.addAll(galleryImages);
@@ -473,7 +487,12 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
   Future<void> _takePhoto() async {
     try {
       final ImagePicker _picker = ImagePicker();
-      XFile? cameraImage = await _picker.pickImage(source: ImageSource.camera);
+      XFile? cameraImage = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 99,
+        maxHeight: 600,
+        maxWidth: 800,
+      );
       if (cameraImage != null) {
         setState(() {
           _images.add(cameraImage);
@@ -484,85 +503,79 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
     }
   }
 
- Future<int?> sendOrderData(Map<String, dynamic> orderData, List<XFile> images) async {
-  try {
-    // Send order data
-    final response = await http.post(
-      Uri.parse('http://${Pallete.ipaddress}:8000/api/orders/'),
-      headers: <String, String>{
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(orderData),
-    );
+  Future<int?> sendOrderData(Map<String, dynamic> orderData, List<XFile> images) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://${Pallete.ipaddress}:8000/api/orders/'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(orderData),
+      );
 
-    if (response.statusCode == 201) {
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
-      final int orderId = responseData['order_id'];
+      if (response.statusCode == 201) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        final int orderId = responseData['order_id'];
 
-      print('Order data sent successfully. Order ID: $orderId');
+        print('Order data sent successfully. Order ID: $orderId');
 
-      // Loop over each image and send it one by one
-      for (var i = 0; i < images.length; i++) {
-        // Create a multipart request
-        var request = http.MultipartRequest(
-          'POST',
-          Uri.parse('http://${Pallete.ipaddress}:8000/api/orders/prescription/$orderId/'),
-        );
+        for (var i = 0; i < images.length; i++) {
+          var request = http.MultipartRequest(
+            'POST',
+            Uri.parse('http://${Pallete.ipaddress}:8000/api/orders/prescription/$orderId/'),
+          );
 
-        // Attach the current image
-        var file = images[i];
-        var stream = http.ByteStream(File(file.path).openRead());
-        var length = await File(file.path).length();
-        var multipartFile = http.MultipartFile(
-          'image', // Ensure this matches the server's expected field name
-          stream,
-          length,
-          filename: p.basename(file.path),
-        );
-        request.files.add(multipartFile);
+          var file = images[i];
+          var stream = http.ByteStream(File(file.path).openRead());
+          var length = await File(file.path).length();
+          var multipartFile = http.MultipartFile(
+            'image',
+            stream,
+            length,
+            filename: p.basename(file.path),
+          );
+          request.files.add(multipartFile);
 
-        // Send the multipart request
-        var imageResponse = await request.send();
-        var imageResponseBody = await http.Response.fromStream(imageResponse);
+          var imageResponse = await request.send();
+          var imageResponseBody = await http.Response.fromStream(imageResponse);
 
-        print('Image upload response status: ${imageResponse.statusCode}');
-        print('Image upload response body: ${imageResponseBody.body}');
+          print('Image upload response status: ${imageResponse.statusCode}');
+          print('Image upload response body: ${imageResponseBody.body}');
 
-        if (imageResponse.statusCode == 200) {
-          print('Image $i uploaded successfully.');
-        } else {
-          print('Failed to upload image $i: ${imageResponse.statusCode}');
-          print('Failed to upload image $i response: ${imageResponseBody.body}');
+          if (imageResponse.statusCode == 200) {
+            print('Image $i uploaded successfully.');
+          } else {
+            print('Failed to upload image $i: ${imageResponse.statusCode}');
+            print('Failed to upload image $i response: ${imageResponseBody.body}');
+          }
         }
+        _images.clear();
+        return orderId;
+      } else {
+        print('Failed to send order data: ${response.statusCode}');
+        print('Order data response: ${response.body}');
+        return null;
       }
-
-      return orderId;
-    } else {
-      print('Failed to send order data: ${response.statusCode}');
-      print('Order data response: ${response.body}');
+    } catch (e) {
+      print('Error sending order data: $e');
       return null;
     }
-  } catch (e) {
-    print('Error sending order data: $e');
-    return null;
-  }
-}
-
-
-
-  void _returnSelectedAddress(AddressDetails addressDetails) {
-    Navigator.pop(context, addressDetails);
   }
 
-  void updateAddress(AddressDetails newAddress) {
+
+  void updateAddress(UserDetails newAddress) {
     setState(() {
       addressDetails = newAddress;
     });
   }
 
-  void _onAddressChanged(AddressDetails newAddress) {
+  void _onAddressChanged(UserDetails newAddress) async{
+  
+    final userDetails = await fetchUserDetails(userId);
     setState(() {
-      addressDetails = newAddress;
+      addressDetails = userDetails;
     });
+    print(addressDetails);
   }
 }
+

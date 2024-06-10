@@ -16,9 +16,3 @@ class RemoveEvent extends CartEvent{
 
 
 class Cartitemnumber extends CartEvent{}
-
-// class RemoveitemfromAddedcartEvent extends CartEvent {
-  // final int removingProductid;
-
-  // RemoveitemfromAddedcartEvent(this.removingProductid);
-// }

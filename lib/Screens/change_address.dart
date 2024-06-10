@@ -1,16 +1,21 @@
-
-// ignore_for_file: use_build_context_synchronously, avoid_print, library_private_types_in_public_api
-
 import 'package:flutter/material.dart';
 import 'package:flutter_application_0/Screens/address_Screen.dart';
 import 'package:flutter_application_0/authentication/ui/signup_screen.dart';
+import 'package:flutter_application_0/cart/bloc/cart_bloc.dart';
 import 'package:flutter_application_0/constants/pallete.dart';
+import 'package:flutter_application_0/model/cartitemmodel.dart';
+import 'package:flutter_application_0/model/medicinedatamodel.dart';
+import 'package:flutter_application_0/myorder/widgets/orderDetailpage.dart';
+import 'package:flutter_application_0/order_deteails/details_of_order_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AddressPage extends StatefulWidget {
+  final List<Medicine> medicalDetails;
+
+  const AddressPage({super.key, required this.medicalDetails});
   @override
   _AddressPageState createState() => _AddressPageState();
 }
@@ -104,7 +109,8 @@ class _AddressPageState extends State<AddressPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 255, 168, 36),
                 shadowColor: const Color.fromARGB(255, 52, 52, 52),
-                padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -158,7 +164,9 @@ class _AddressPageState extends State<AddressPage> {
     final address =
         '${addressDetails.houseNo}, ${addressDetails.locality}, ${addressDetails.pincode}';
     return GestureDetector(
-      onTap: () => _returnSelectedAddress(addressDetails),
+      onTap: () async {
+        saveAddress(addressDetails);
+      },
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
         padding: const EdgeInsets.all(10.0),
@@ -229,6 +237,42 @@ class _AddressPageState extends State<AddressPage> {
       ),
     );
   }
+
+  void saveAddress(AddressDetails addressDetails) async {
+// update/
+// 'http://${Pallete.ipaddress}:8000/api/user/';
+    final url = Uri.parse('http://${Pallete.ipaddress}:8000/api/user/update/');
+    Map<String, dynamic> userData = {
+      'user_id': addressDetails.userId,
+      'first_name': addressDetails.name,
+      'last_name': addressDetails.phone,
+      'address1': addressDetails.pincode,
+      'address2': addressDetails.locality,
+      'phone_number': addressDetails.houseNo,
+    };
+
+    final response = await http.put(
+      url,
+      body: json.encode(userData),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    );
+
+    print(response.body);
+    print(response.statusCode);
+    if (response.statusCode == 200) {
+      Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => ItemDetailsPage(medicalDetails: widget.medicalDetails)));
+              
+     
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Failed to save address'),
+      ));
+    }
+  }
 }
 
 class ApiService {
@@ -244,33 +288,32 @@ class ApiService {
     }
   }
 
-static Future<void> updateAddressDetails(
-    Map<String, dynamic> addressDetails, int userId) async {
-  final url = Uri.parse(
-      'http://${Pallete.ipaddress}:8000/api/orders/delivery/address/$userId/');
-  try {
-   
-    final response = await http.put(
-      url,
-      body: jsonEncode(addressDetails),
-      headers: {'Content-Type': 'application/json'},
-    );
- print(response.body);
-    if (response.statusCode == 200) {
-      // Address details updated successfully
-      print('Address details updated successfully');
-    } else {
-      // Handle HTTP error response
-      print('Failed to update address details. Status Code: ${response.statusCode}');
+  static Future<void> updateAddressDetails(
+      Map<String, dynamic> addressDetails, int userId) async {
+    final url = Uri.parse(
+        'http://${Pallete.ipaddress}:8000/api/orders/delivery/address/$userId/');
+    try {
+      final response = await http.put(
+        url,
+        body: jsonEncode(addressDetails),
+        headers: {'Content-Type': 'application/json'},
+      );
+      print(response.body);
+      if (response.statusCode == 200) {
+        // Address details updated successfully
+        print('Address details updated successfully');
+      } else {
+        // Handle HTTP error response
+        print(
+            'Failed to update address details. Status Code: ${response.statusCode}');
+        throw Exception('Failed to update address details');
+      }
+    } catch (e) {
+      // Handle network or other errors
+      print('Error updating address details: $e');
       throw Exception('Failed to update address details');
     }
-  } catch (e) {
-    // Handle network or other errors
-    print('Error updating address details: $e');
-    throw Exception('Failed to update address details');
   }
-}
-
 
   static Future<void> logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();

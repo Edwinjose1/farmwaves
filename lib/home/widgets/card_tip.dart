@@ -121,8 +121,7 @@ class _HealthTipItemState extends State<HealthTipItem> {
                         setState(() {
                           _isLiked = !_isLiked; // Toggle the liked state
                         });
-                        // widget.homeBloc.add(HomeTipLikedEvent(
-                        //     LikedProducts: widget.healthTipDataModel));
+                      
                       },
                     ),
                     const Text(

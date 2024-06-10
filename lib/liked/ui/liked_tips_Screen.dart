@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter_application_0/bloc/liked_bloc/bloc/liked_bloc.dart';
 import 'package:flutter_application_0/liked/bloc/liked_bloc.dart';
-// import 'package:flutter_application_0/liked_bloc/widgets/liked_tip_card.dart';
 import 'package:flutter_application_0/widgets/liked_tip_card.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

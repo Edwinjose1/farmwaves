@@ -524,15 +524,17 @@ Future<void> uploadImages() async {
         print('Failed to upload image ${i + 1} response: ${imageResponseBody.body}');
       }
     }
+     _images.clear();
   } catch (e) {
     print('Error uploading images: $e');
   }
 }
 
-  Future<void> pickImagesFromGallery() async {
+Future<void> pickImagesFromGallery() async {
     try {
       final ImagePicker _picker = ImagePicker();
-      List<XFile>? galleryImages = await _picker.pickMultiImage();
+      List<XFile>? galleryImages =
+          await _picker.pickMultiImage(imageQuality: 99,maxHeight: 600,maxWidth: 800);
       if (galleryImages != null && galleryImages.isNotEmpty) {
         setState(() {
           _images.addAll(galleryImages);
@@ -546,7 +548,10 @@ Future<void> uploadImages() async {
   Future<void> _takePhoto() async {
     try {
       final ImagePicker _picker = ImagePicker();
-      XFile? cameraImage = await _picker.pickImage(source: ImageSource.camera);
+      XFile? cameraImage = await _picker.pickImage(
+        source: ImageSource.camera, imageQuality: 99, maxHeight: 600,
+        maxWidth: 800, // Adjust the quality as needed
+      );
       if (cameraImage != null) {
         setState(() {
           _images.add(cameraImage);
@@ -556,6 +561,7 @@ Future<void> uploadImages() async {
       print(e);
     }
   }
+
 
 Future<void> reorderProduct() async {
   print("Starting reorder process");

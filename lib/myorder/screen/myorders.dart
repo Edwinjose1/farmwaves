@@ -1,99 +1,60 @@
-import 'dart:async';
-
+// my_orders_page.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_application_0/constants/pallete.dart';
+import 'package:flutter_application_0/myorder/bloc/order_bloc.dart';
 import 'package:flutter_application_0/myorder/models/models.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+// import 'package:flutter_application_0/myorder/blocs/order_bloc.dart';
 import 'package:flutter_application_0/myorder/widgets/orderDetailpage.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
-// ignore: use_key_in_widget_constructors
-class MyOrdersPage extends StatefulWidget {
-  @override
-  // ignore: library_private_types_in_public_api
-  _MyOrdersPageState createState() => _MyOrdersPageState();
-}
-
-class _MyOrdersPageState extends State<MyOrdersPage> {
-  List<OrderTileData> orders = [];
-  late Timer _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    // Introduce a 1 second delay before fetching orders
-    Future.delayed(const Duration(seconds: 1), () {
-      fetchOrders();
-      // Start periodic timer to fetch orders every 5 seconds
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        fetchOrders();
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel(); // Cancel the timer when the widget is disposed
-    super.dispose();
-  }
-
-  Future<void> fetchOrders() async {
-    setState(() {
-      // isLoading = true; // Start loading
-    });
-
-    String? userId = await getUserIdFromSharedPreferences();
-
-    final response = await http.get(Uri.parse('http://${Pallete.ipaddress}:8000/api/orders/user/$userId/'));
-
-    if (response.statusCode == 200) {
-      List<dynamic> orderList = json.decode(response.body);
-      setState(() {
-        orders = orderList.map((order) => OrderTileData.fromJson(order)).toList();
-        // isLoading = false; // End loading
-      });
-    } else {
-      setState(() {
-        // isLoading = false; // End loading
-      });
-      throw Exception('Failed to load orders');
-    }
-  }
-
-  Future<String?> getUserIdFromSharedPreferences() async {
-    SharedPreferences sharedPref = await SharedPreferences.getInstance();
-    String? storedUserId = sharedPref.getString('user_id');
-
-    return storedUserId;
-  }
-
+class MyOrdersPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Orders'),
-      ),
-      body: ListView.builder(
-        itemCount: orders.length,
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => OrderDetailsPage(orderId: orders[index].id),
-                ),
+    return BlocProvider(
+      create: (context) => OrderBloc(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('My Orders'),
+        ),
+        body: BlocBuilder<OrderBloc, OrderState>(
+          builder: (context, state) {
+            if (state is OrderInitial) {
+              return Center(child: CircularProgressIndicator());
+            } else if (state is OrderLoading) {
+              return Center(child: CircularProgressIndicator());
+            } else if (state is OrderLoaded) {
+              return ListView.builder(
+                itemCount: state.orders.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OrderDetailsPage(orderId: state.orders[index].id),
+                        ),
+                      );
+                    },
+                    child: OrderTile(order: state.orders[index]),
+                  );
+                },
               );
-            },
-            child: OrderTile(order: orders[index]),
-          );
-        },
+            } else if (state is OrderError) {
+              return Center(child: Text('Error: ${state.error}'));
+            } else {
+              return Container(); // Default empty container
+            }
+          },
+        ),
       ),
     );
   }
 }
+
+
+
+
+
+
 
 class OrderTile extends StatelessWidget {
   final OrderTileData order;

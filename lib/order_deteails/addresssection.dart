@@ -3,12 +3,17 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_application_0/Screens/change_address.dart';
+import 'package:flutter_application_0/Screens/profile.dart';
+import 'package:flutter_application_0/home/ui/original_home_screen.dart';
+import 'package:flutter_application_0/model/medicinedatamodel.dart';
 
 class AddressSection extends StatefulWidget {
-  final AddressDetails? addressDetails; // Make it nullable
-  final Function(AddressDetails) onAddressChanged;
+    final List<Medicine> medicalDetails;
+  final UserDetails? addressDetails; // Make it nullable
+  final Function(UserDetails) onAddressChanged;
 
   AddressSection({
+    required this.medicalDetails,
     required this.addressDetails,
     required this.onAddressChanged,
   });
@@ -19,7 +24,7 @@ class AddressSection extends StatefulWidget {
 }
 
 class _AddressSectionState extends State<AddressSection> {
-  AddressDetails? _selectedAddress; // Make it nullable
+  UserDetails? _selectedAddress; // Make it nullable
   bool _isLoading = false;
 
   @override
@@ -33,10 +38,10 @@ class _AddressSectionState extends State<AddressSection> {
       _isLoading = true;
     });
 
-    final selectedAddress = await Navigator.push(
+    final selectedAddress = await Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => AddressPage(),
+        builder: (context) => AddressPage(medicalDetails:widget.medicalDetails),
       ),
     );
 
@@ -67,7 +72,12 @@ class _AddressSectionState extends State<AddressSection> {
             children: [
               GestureDetector(
                 onTap: () {
-                  Navigator.of(context).pop();
+                  Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => Home1()),
+          (Route<dynamic> route) => false,
+        );
+
                 },
                 child: Container(
                   color: Colors.white,
@@ -88,7 +98,7 @@ class _AddressSectionState extends State<AddressSection> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _selectedAddress?.name ?? 'John Doe', // Use null-aware operators
+                _selectedAddress?.firstName ?? 'John Doe', // Use null-aware operators
                 style: const TextStyle(
                   fontSize: 15.0,
                   color: Colors.black,
@@ -96,7 +106,7 @@ class _AddressSectionState extends State<AddressSection> {
               ),
               const SizedBox(height: 8.0),
               Text(
-                _selectedAddress?.locality ?? '123 Street, City',
+                _selectedAddress?.address2 ?? '123 Street, City',
                 style: const TextStyle(
                   fontSize: 15.0,
                   color: Colors.black,
@@ -104,7 +114,7 @@ class _AddressSectionState extends State<AddressSection> {
               ),
               const SizedBox(height: 8.0),
               Text(
-                _selectedAddress?.phone ?? '+1234567890',
+                _selectedAddress?.phoneNumber ?? '+1234567890',
                 style: const TextStyle(
                   fontSize: 15.0,
                   color: Colors.black,
@@ -112,7 +122,7 @@ class _AddressSectionState extends State<AddressSection> {
               ),
               const SizedBox(height: 8.0),
               Text(
-                _selectedAddress?.pincode ?? '12345',
+                _selectedAddress?.lastName ?? '12345',
                 style: const TextStyle(
                   fontSize: 15.0,
                   color: Colors.black,

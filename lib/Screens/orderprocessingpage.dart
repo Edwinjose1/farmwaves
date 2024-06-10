@@ -9,10 +9,6 @@ import 'package:flutter_application_0/home/ui/original_home_screen.dart';
 import 'package:lottie/lottie.dart';
 
 class OrderProcessingPage extends StatefulWidget {
-  final int orderId; // Add orderId parameter
-
-  OrderProcessingPage({required this.orderId}); // Constructor
-
   @override
   _OrderProcessingPageState createState() => _OrderProcessingPageState();
 }
@@ -32,13 +28,12 @@ class _OrderProcessingPageState extends State<OrderProcessingPage> {
         });
       }
     });
-     Timer(const Duration(seconds: 5), () {
+    Timer(const Duration(seconds: 5), () {
       if (mounted) {
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => const Home1(),
-          ),
+          MaterialPageRoute(builder: (context) => Home1()),
+          (Route<dynamic> route) => false,
         );
       }
     });
@@ -85,20 +80,21 @@ class _OrderProcessingPageState extends State<OrderProcessingPage> {
             child: Center(
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const Home1(),
-          ),
-        );
-                 
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => Home1()),
+                    (Route<dynamic> route) => false,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 46, 190, 51), // Background color
+                  backgroundColor: const Color.fromARGB(
+                      255, 46, 190, 51), // Background color
                   shadowColor: Colors.white, // Text color
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16), // Button padding
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 40, vertical: 16), // Button padding
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30), // Button border radius
+                    borderRadius:
+                        BorderRadius.circular(30), // Button border radius
                   ),
                 ),
                 child: const Text(

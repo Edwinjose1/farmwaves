@@ -1,4 +1,3 @@
-
 // ignore_for_file: use_build_context_synchronously, use_key_in_widget_constructors, library_private_types_in_public_api, avoid_print
 
 import 'dart:convert';
@@ -63,7 +62,8 @@ class ApiService {
     }
   }
 
-  static Future<void> updateUserDetails(Map<String, dynamic> userDetails, int userId) async {
+  static Future<void> updateUserDetails(
+      Map<String, dynamic> userDetails, int userId) async {
     final Map<String, dynamic> requestBody = {
       'user_id': userId.toString(),
       ...userDetails,
@@ -181,10 +181,10 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             ),
             const SizedBox(height: 20.0),
             _buildDetailItem('Full Name', '${userDetails.firstName} '),
-             _buildDetailItem('Pin Code', userDetails.lastName),
+            _buildDetailItem('Pin Code', userDetails.lastName),
             _buildDetailItem('Phone Number', userDetails.phoneNumber),
             _buildDetailItem('Address', userDetails.address1),
-               _buildDetailItem('Locality', userDetails.address2),
+            _buildDetailItem('Locality', userDetails.address2),
             const SizedBox(height: 20.0),
             Align(
               alignment: Alignment.centerRight,
@@ -225,11 +225,16 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   }
 
   void _showEditDialog(UserDetails userDetails) {
-    TextEditingController firstNameController = TextEditingController(text: userDetails.firstName);
-    TextEditingController lastNameController = TextEditingController(text: userDetails.lastName);
-    TextEditingController address1Controller = TextEditingController(text: userDetails.address1);
-    TextEditingController address2Controller = TextEditingController(text: userDetails.address2);
-    TextEditingController phoneNumberController = TextEditingController(text: userDetails.phoneNumber);
+    TextEditingController firstNameController =
+        TextEditingController(text: userDetails.firstName);
+    TextEditingController lastNameController =
+        TextEditingController(text: userDetails.lastName);
+    TextEditingController address1Controller =
+        TextEditingController(text: userDetails.address1);
+    TextEditingController address2Controller =
+        TextEditingController(text: userDetails.address2);
+    TextEditingController phoneNumberController =
+        TextEditingController(text: userDetails.phoneNumber);
 
     showDialog(
       context: context,
@@ -240,11 +245,15 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             child: Form(
               child: Column(
                 children: [
-                  _buildEditTextField(firstNameController, 'First Name', 'Enter first name'),
-                  _buildEditTextField(lastNameController, 'Pin Code', 'Enter Pin code'),
-                  _buildEditTextField(address1Controller, 'House No', 'Enter House No'),
+                  _buildEditTextField(
+                      firstNameController, 'First Name', 'Enter first name'),
+                  _buildEditTextField(
+                      lastNameController, 'Pin Code', 'Enter Pin code'),
+                  _buildEditTextField(
+                      address1Controller, 'House No', 'Enter House No'),
                   _buildEditTextField(address2Controller, 'Address', ''),
-                  _buildEditTextField(phoneNumberController, 'Phone Number', 'Enter phone number'),
+                  _buildEditTextField(phoneNumberController, 'Phone Number',
+                      'Enter phone number'),
                 ],
               ),
             ),
@@ -257,59 +266,66 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               child: const Text('Cancel'),
             ),
             TextButton(
-onPressed: () async {
-if (_validateInputs([firstNameController, lastNameController, address1Controller, phoneNumberController])) {
-Map<String, dynamic> updatedUserDetails = {
-'first_name': firstNameController.text,
-'last_name': lastNameController.text,
-'address1': address1Controller.text,
-'address2': address2Controller.text,
-'phone_number': phoneNumberController.text,
-};
-await ApiService.updateUserDetails(updatedUserDetails, userId);
-setState(() {
-_futureUserDetails = ApiService.fetchUserDetails(userId);
-});
-Navigator.of(context).pop();
-}
-},
-child: const Text('Save'),
-),
-],
-);
-},
-);
-}
+              onPressed: () async {
+                if (_validateInputs([
+                  firstNameController,
+                  lastNameController,
+                  address1Controller,
+                  phoneNumberController
+                ])) {
+                  Map<String, dynamic> updatedUserDetails = {
+                    'first_name': firstNameController.text,
+                    'last_name': lastNameController.text,
+                    'address1': address1Controller.text,
+                    'address2': address2Controller.text,
+                    'phone_number': phoneNumberController.text,
+                  };
+                  await ApiService.updateUserDetails(
+                      updatedUserDetails, userId);
+                  setState(() {
+                    _futureUserDetails = ApiService.fetchUserDetails(userId);
+                  });
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-Widget _buildEditTextField(TextEditingController controller, String label, String hint) {
-return Padding(
-padding: const EdgeInsets.symmetric(vertical: 8.0),
-child: TextFormField(
-controller: controller,
-decoration: InputDecoration(
-labelText: label,
-hintText: hint,
-border: const OutlineInputBorder(),
-),
-validator: (value) {
-if (value == null || value.isEmpty) {
-return 'Please enter $label';
-}
-return null;
-},
-),
-);
-}
+  Widget _buildEditTextField(
+      TextEditingController controller, String label, String hint) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          border: const OutlineInputBorder(),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter $label';
+          }
+          return null;
+        },
+      ),
+    );
+  }
 
-bool _validateInputs(List<TextEditingController> controllers) {
-for (var controller in controllers) {
-if (controller.text.isEmpty) {
-ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-content: Text('Please fill all fields.'),
-));
-return false;
-}
-}
-return true;
-}
+  bool _validateInputs(List<TextEditingController> controllers) {
+    for (var controller in controllers) {
+      if (controller.text.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Please fill all fields.'),
+        ));
+        return false;
+      }
+    }
+    return true;
+  }
 }
